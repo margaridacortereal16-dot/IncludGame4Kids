@@ -1,0 +1,1739 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ateliê do Mundo - Jogo Intercultural e Inclusivo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Open+Dyslexic&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            font-family: 'Fredoka', cursive, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        /* Suporte a Leitura Fácil / Dislexia */
+        .dyslexic-font * {
+            font-family: 'Open Dyslexic', sans-serif !important;
+        }
+
+        /* Modo Alto Contraste */
+        .high-contrast {
+            background-color: #000000 !important;
+            color: #FFFF00 !important;
+        }
+        .high-contrast button, .high-contrast .card-bg, .high-contrast div {
+            background-color: #1a1a1a !important;
+            border-color: #FFFF00 !important;
+            color: #FFFF00 !important;
+        }
+        .high-contrast .text-muted, .high-contrast p {
+            color: #FFFFFF !important;
+        }
+
+        /* Modo Calmo (Cores Suaves e Sem Animações Rápidas) */
+        .calm-mode {
+            background-color: #f4efe6 !important;
+            filter: saturate(0.85);
+        }
+        .calm-mode * {
+            animation-duration: 0.001ms !important;
+            transition-duration: 0.001ms !important;
+        }
+
+        /* Efeitos Visuais Interativos para Crianças */
+        .btn-bounce {
+            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.15s;
+        }
+        .btn-bounce:hover, .btn-bounce:focus {
+            transform: scale(1.05);
+        }
+        .btn-bounce:active {
+            transform: scale(0.95);
+        }
+
+        /* Animação Suave de Pulso */
+        @keyframes softPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+        .pulse-gentle {
+            animation: softPulse 3s infinite ease-in-out;
+        }
+
+        canvas {
+            touch-action: none;
+        }
+
+        /* Scrollbar personalizada para o Friso Coletivo */
+        .custom-scroll::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #1e293b;
+            border-radius: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #a855f7;
+            border-radius: 8px;
+            border: 2px solid #1e293b;
+        }
+    </style>
+</head>
+<body class="bg-amber-50 text-slate-800 min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+    <!-- NÚCLEO: Cabeçalho Fixo em Todos os Ecrãs -->
+    <header class="bg-white/95 backdrop-blur border-b-4 border-amber-300 sticky top-0 z-40 px-3 py-2 sm:px-6 shadow-md">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
+            
+            <!-- Botão Início -->
+            <button onclick="Core.navigateTo('home')" class="btn-bounce bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-4 py-2 sm:px-5 sm:py-2.5 rounded-2xl flex items-center gap-2 text-base sm:text-lg shadow-lg border-b-4 border-emerald-700" aria-label="Voltar ao Início">
+                <i class="fa-solid fa-house text-xl"></i>
+                <span class="hidden sm:inline">Início</span>
+            </button>
+
+            <!-- Título do Ateliê -->
+            <div class="flex items-center gap-2 cursor-pointer" onclick="Core.navigateTo('home')">
+                <span class="text-3xl sm:text-4xl">🌍</span>
+                <h1 class="text-xl sm:text-2xl font-bold tracking-wide text-amber-900 hidden sm:block" id="header-title">Ateliê do Mundo</h1>
+            </div>
+
+            <!-- Ações do Núcleo -->
+            <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                <!-- Selector de Língua (PT / EN / ES) -->
+                <div class="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200 gap-1">
+                    <button onclick="Core.setLanguage('pt')" id="lang-btn-pt" class="px-2 py-1 rounded-xl text-xs font-bold bg-amber-400 text-amber-950 shadow-sm transition-all">🇵🇹 PT</button>
+                    <button onclick="Core.setLanguage('en')" id="lang-btn-en" class="px-2 py-1 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 transition-all">🇬🇧 EN</button>
+                    <button onclick="Core.setLanguage('es')" id="lang-btn-es" class="px-2 py-1 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 transition-all">🇪🇸 ES</button>
+                </div>
+
+                <!-- Botão Desenho Infinito em Cadeia -->
+                <button onclick="Core.navigateTo('desenho_cadeia')" class="btn-bounce bg-purple-600 hover:bg-purple-700 text-white font-bold px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl flex items-center gap-2 text-sm sm:text-base shadow-md border-b-4 border-purple-800" title="Jogo do Desenho Infinito">
+                    <span class="text-xl">🎨</span>
+                    <span class="hidden md:inline font-bold" id="header-btn-draw">Desenho Infinito</span>
+                </button>
+
+                <!-- Botão A Minha Cultura -->
+                <button onclick="Core.openMinhaCulturaModal()" class="btn-bounce bg-rose-500 hover:bg-rose-600 text-white font-bold px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl flex items-center gap-2 text-sm sm:text-base shadow-md border-b-4 border-rose-700">
+                    <span class="text-xl">✨</span>
+                    <span class="hidden sm:inline font-bold" id="header-btn-culture">A Minha Cultura</span>
+                </button>
+
+                <!-- Botão Mural da Sala -->
+                <button onclick="Core.navigateTo('mural')" class="btn-bounce bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl flex items-center gap-2 text-sm sm:text-base shadow-md border-b-4 border-amber-700">
+                    <i class="fa-solid fa-palette text-lg"></i>
+                    <span class="hidden lg:inline" id="header-btn-mural">Mural</span>
+                </button>
+
+                <!-- Painel Acessibilidade Toggle -->
+                <button onclick="Core.toggleAccessibilityPanel()" class="btn-bounce bg-indigo-500 hover:bg-indigo-600 text-white font-bold p-2.5 sm:px-3 sm:py-2.5 rounded-2xl text-base shadow-md border-b-4 border-indigo-700" title="Opções de Acessibilidade">
+                    <i class="fa-solid fa-universal-access text-xl"></i>
+                </button>
+
+                <!-- Botão Áudio Som Geral -->
+                <button id="bg-sound-btn" onclick="Core.toggleAudio()" class="btn-bounce bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold p-2.5 sm:px-3 sm:py-2.5 rounded-2xl text-base shadow-sm">
+                    <i class="fa-solid fa-volume-high text-xl" id="sound-icon"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- PAINEL DE ACESSIBILIDADE MULTISSENSORIAL DO NÚCLEO -->
+        <div id="accessibility-panel" class="hidden max-w-7xl mx-auto mt-3 p-4 bg-indigo-50 border-2 border-indigo-200 rounded-2xl shadow-inner grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs sm:text-sm">
+            <button onclick="Core.toggleHighContrast()" class="p-3 bg-white hover:bg-indigo-100 rounded-xl font-bold flex flex-col items-center gap-1 border border-indigo-200 shadow-sm">
+                <i class="fa-solid fa-circle-half-stroke text-indigo-600 text-lg"></i>
+                <span>Alto Contraste</span>
+            </button>
+            <button onclick="Core.toggleCalmMode()" class="p-3 bg-white hover:bg-indigo-100 rounded-xl font-bold flex flex-col items-center gap-1 border border-indigo-200 shadow-sm">
+                <i class="fa-solid fa-leaf text-emerald-600 text-lg"></i>
+                <span>Modo Calmo</span>
+            </button>
+            <button onclick="Core.toggleDyslexicFont()" class="p-3 bg-white hover:bg-indigo-100 rounded-xl font-bold flex flex-col items-center gap-1 border border-indigo-200 shadow-sm">
+                <i class="fa-solid fa-font text-purple-600 text-lg"></i>
+                <span>Leitura Fácil</span>
+            </button>
+            <button onclick="Core.toggleLGPMode()" class="p-3 bg-white hover:bg-indigo-100 rounded-xl font-bold flex flex-col items-center gap-1 border border-indigo-200 shadow-sm">
+                <i class="fa-solid fa-hands-asl-interpreting text-amber-600 text-lg"></i>
+                <span>Vídeos LGP</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ÁREA PRINCIPAL -->
+    <main id="app-container" class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
+        <!-- O conteúdo é injetado dinamicamente via JS -->
+    </main>
+
+    <!-- MODAL DO NÚCLEO: FICHA DE OBRA COM BOTÕES DE VOZ INDIVIDUAIS -->
+    <div id="ficha-obra-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border-4 border-amber-400 relative overflow-y-auto max-h-[90vh]">
+            <button onclick="Core.closeFichaObra()" class="absolute top-4 right-4 bg-slate-200 hover:bg-slate-300 text-slate-700 w-10 h-10 rounded-full font-bold text-xl flex items-center justify-center">✕</button>
+            
+            <div class="flex items-center gap-3 mb-4 border-b-2 border-amber-100 pb-3">
+                <span class="text-3xl">📋</span>
+                <div>
+                    <h2 class="text-2xl font-bold text-amber-900" id="fo-titulo">Ficha de Obra</h2>
+                    <p class="text-sm text-slate-500" id="fo-regiao">Origem Cultural</p>
+                </div>
+                <div class="ml-auto flex items-center gap-2">
+                    <button onclick="Core.imprimirFichaObraAtual()" class="btn-bounce bg-indigo-600 text-white px-3 py-2 rounded-2xl hover:bg-indigo-700 shadow flex items-center gap-1.5 font-bold text-sm" title="Imprimir esta Ficha de Obra">
+                        <i class="fa-solid fa-print text-base"></i>
+                        <span class="hidden sm:inline">Imprimir</span>
+                    </button>
+                    <button onclick="Core.speakText(Core.currentFichaObraAudioText)" class="bg-amber-500 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-2xl hover:bg-amber-600 shadow flex items-center gap-2 font-bold text-sm">
+                        <i class="fa-solid fa-volume-high text-base"></i>
+                        <span class="hidden sm:inline">Ouvir Tudo</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Imagem / Previsualização da Obra -->
+            <div id="fo-imagem-container" class="w-full h-44 bg-amber-50 rounded-2xl mb-6 flex items-center justify-center overflow-hidden border border-amber-200">
+                <!-- Conteúdo Visual -->
+            </div>
+
+            <!-- As 4 Perguntas Obrigatórias do Núcleo -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="p-4 bg-amber-50 rounded-2xl border border-amber-200">
+                    <div class="flex items-center justify-between font-bold text-amber-900 mb-1">
+                        <span class="flex items-center gap-2"><span class="text-xl">🧑‍🎨</span> 1. Quem fez?</span>
+                        <span id="fo-quem-btn"></span>
+                    </div>
+                    <p id="fo-quem" class="text-slate-700 text-sm">...</p>
+                </div>
+
+                <div class="p-4 bg-rose-50 rounded-2xl border border-rose-200">
+                    <div class="flex items-center justify-between font-bold text-rose-900 mb-1">
+                        <span class="flex items-center gap-2"><span class="text-xl">🎯</span> 2. Para quê?</span>
+                        <span id="fo-para-que-btn"></span>
+                    </div>
+                    <p id="fo-para-que" class="text-slate-700 text-sm">...</p>
+                </div>
+
+                <div class="p-4 bg-blue-50 rounded-2xl border border-blue-200">
+                    <div class="flex items-center justify-between font-bold text-blue-900 mb-1">
+                        <span class="flex items-center gap-2"><span class="text-xl">🧵</span> 3. Com que materiais?</span>
+                        <span id="fo-materiais-btn"></span>
+                    </div>
+                    <p id="fo-materiais" class="text-slate-700 text-sm">...</p>
+                </div>
+
+                <div class="p-4 bg-emerald-50 rounded-2xl border border-emerald-200">
+                    <div class="flex items-center justify-between font-bold text-emerald-900 mb-1">
+                        <span class="flex items-center gap-2"><span class="text-xl">❤️</span> 4. O que significa?</span>
+                        <span id="fo-significado-btn"></span>
+                    </div>
+                    <p id="fo-significado" class="text-slate-700 text-sm">...</p>
+                </div>
+            </div>
+
+            <div class="mt-6 text-center">
+                <button onclick="Core.closeFichaObra()" class="btn-bounce bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-8 py-3 rounded-2xl text-lg shadow-md">
+                    Entendi! 👍
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DO NÚCLEO: "A MINHA CULTURA TAMBÉM CONTA" -->
+    <div id="minha-cultura-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border-4 border-rose-400 relative overflow-y-auto max-h-[92vh]">
+            <button onclick="Core.closeMinhaCulturaModal()" class="absolute top-4 right-4 bg-slate-200 text-slate-700 w-10 h-10 rounded-full font-bold text-xl flex items-center justify-center">✕</button>
+            
+            <div class="flex items-center gap-3 mb-4 border-b-2 border-rose-100 pb-3">
+                <span class="text-3xl">🌟</span>
+                <div>
+                    <h2 class="text-2xl font-bold text-rose-900">A Minha Cultura Também Conta</h2>
+                    <p class="text-sm text-slate-600">Partilha um objeto, canção, arte ou tradição da tua família!</p>
+                </div>
+            </div>
+
+            <form onsubmit="Core.salvarObraMinhaCultura(event)" class="space-y-4">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-2">1. Como queres partilhar?</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" onclick="Core.setMcType('desenho')" id="mc-btn-desenho" class="p-3 bg-rose-100 border-2 border-rose-400 rounded-2xl font-bold text-rose-800 flex flex-col items-center gap-1">
+                            <span class="text-2xl">🎨</span> Desenhar
+                        </button>
+                        <button type="button" onclick="Core.setMcType('foto')" id="mc-btn-foto" class="p-3 bg-slate-100 border-2 border-slate-200 rounded-2xl font-bold text-slate-700 flex flex-col items-center gap-1">
+                            <span class="text-2xl">📸</span> Foto
+                        </button>
+                        <button type="button" onclick="Core.setMcType('audio')" id="mc-btn-audio" class="p-3 bg-slate-100 border-2 border-slate-200 rounded-2xl font-bold text-slate-700 flex flex-col items-center gap-1">
+                            <span class="text-2xl">🎤</span> Voz
+                        </button>
+                    </div>
+                </div>
+
+                <div id="mc-area-desenho" class="space-y-2">
+                    <label class="block font-bold text-slate-700 text-sm">Desenha a tua obra aqui:</label>
+                    <div class="border-2 border-dashed border-rose-300 rounded-2xl overflow-hidden bg-amber-50">
+                        <canvas id="mc-canvas" width="500" height="200" class="w-full h-44 cursor-crosshair bg-white"></canvas>
+                    </div>
+                    <button type="button" onclick="Core.limparMcCanvas()" class="text-xs bg-slate-200 hover:bg-slate-300 px-3 py-1 rounded-lg">Apagar Desenho</button>
+                </div>
+
+                <div id="mc-area-foto" class="space-y-2 hidden">
+                    <label class="block font-bold text-slate-700 text-sm">Junta uma foto do teu objeto ou tradição:</label>
+                    <div class="border-2 border-dashed border-rose-300 rounded-2xl p-4 bg-rose-50/50 text-center flex flex-col items-center justify-center min-h-[170px]">
+                        <input type="file" id="mc-input-file-foto" accept="image/*" onchange="Core.handleFotoUpload(event)" class="hidden">
+                        <div id="mc-foto-placeholder" class="cursor-pointer flex flex-col items-center" onclick="document.getElementById('mc-input-file-foto').click()">
+                            <span class="text-4xl mb-1">📷</span>
+                            <span class="font-bold text-rose-700 text-sm">Clica para carregar uma foto</span>
+                            <span class="text-xs text-slate-500">ou tirar com a câmara</span>
+                        </div>
+                        <img id="mc-foto-preview" class="hidden max-h-40 rounded-xl shadow border border-rose-200 object-contain mx-auto" alt="Previsualização da Foto">
+                    </div>
+                </div>
+
+                <div id="mc-area-audio" class="space-y-2 hidden">
+                    <label class="block font-bold text-slate-700 text-sm">Grava a tua voz ou uma história da tua família:</label>
+                    <div class="border-2 border-dashed border-rose-300 rounded-2xl p-4 bg-rose-50/50 text-center flex flex-col items-center justify-center space-y-3">
+                        <button type="button" id="mc-btn-record" onclick="Core.toggleAudioRecord()" class="btn-bounce bg-white border-2 border-rose-400 text-rose-800 font-bold px-5 py-3 rounded-2xl shadow flex items-center gap-2 text-base">
+                            <span class="text-2xl">🎤</span> <span id="mc-btn-record-text">Começar a Gravar Voz</span>
+                        </button>
+                        <p id="mc-audio-status" class="text-xs font-bold text-slate-600">Toca no botão e fala para o microfone!</p>
+                        <audio id="mc-audio-preview" controls class="hidden w-full max-w-md mt-2 rounded-xl"></audio>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">Nome da tradição / obra:</label>
+                        <input type="text" id="mc-input-titulo" required placeholder="Ex: Dança da minha terra" class="w-full p-2.5 rounded-xl border border-slate-300 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">Quem fez / Origem:</label>
+                        <input type="text" id="mc-input-quem" required placeholder="Ex: A minha avó Maria" class="w-full p-2.5 rounded-xl border border-slate-300 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">Para quê serve?</label>
+                        <input type="text" id="mc-input-para-que" placeholder="Ex: Festejar em família" class="w-full p-2.5 rounded-xl border border-slate-300 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">Materiais / Instrumentos:</label>
+                        <input type="text" id="mc-input-materiais" placeholder="Ex: Papel, madeira, voz" class="w-full p-2.5 rounded-xl border border-slate-300 text-sm">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full btn-bounce bg-rose-500 hover:bg-rose-600 text-white font-bold py-3.5 rounded-2xl text-lg shadow-lg border-b-4 border-rose-700">
+                    🚀 Guardar no Mural da Sala!
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL ESPECIAL DO DESENHO INFINITO: VISUALIZADOR DE FRISO COLETIVO (2 A 25 CRIANÇAS) -->
+    <div id="friso-coletivo-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-2 sm:p-4 hidden">
+        <div class="bg-slate-900 rounded-3xl max-w-5xl w-full h-[94vh] p-4 sm:p-6 shadow-2xl border-4 border-purple-500 flex flex-col justify-between relative overflow-hidden">
+            
+            <!-- Cabeçalho do Modal -->
+            <div class="flex items-center justify-between border-b-2 border-slate-800 pb-3 gap-2 flex-wrap">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl sm:text-4xl">🎨</span>
+                    <div>
+                        <h2 class="text-xl sm:text-3xl font-black text-purple-300 tracking-wide flex items-center gap-2">
+                            <span>Friso Infinito Coletivo</span>
+                            <span id="friso-tag-count" class="bg-purple-600 text-white text-xs sm:text-sm px-3 py-1 rounded-full font-bold">2 Crianças</span>
+                        </h2>
+                        <p class="text-xs sm:text-sm text-slate-400">Desenho colaborativo e contínuo da nossa sala!</p>
+                    </div>
+                </div>
+
+                <!-- Botões de Controlo do Visualizador -->
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button onclick="Modules.desenho_cadeia.toggleAutoScroll()" id="btn-auto-scroll" class="btn-bounce bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-3 py-2 rounded-xl text-xs sm:text-sm flex items-center gap-1 shadow">
+                        <span>🚀 Rolar Sozinho</span>
+                    </button>
+                    <button onclick="Modules.desenho_cadeia.zoomFriso(0.15)" class="btn-bounce bg-slate-800 text-white font-bold px-3 py-2 rounded-xl text-sm hover:bg-slate-700 border border-slate-700" title="Aumentar Zoom">
+                        <i class="fa-solid fa-magnifying-glass-plus"></i>
+                    </button>
+                    <button onclick="Modules.desenho_cadeia.zoomFriso(-0.15)" class="btn-bounce bg-slate-800 text-white font-bold px-3 py-2 rounded-xl text-sm hover:bg-slate-700 border border-slate-700" title="Diminuir Zoom">
+                        <i class="fa-solid fa-magnifying-glass-minus"></i>
+                    </button>
+                    <button onclick="Modules.desenho_cadeia.closeFrisoModal()" class="btn-bounce bg-rose-500 hover:bg-rose-600 text-white font-bold p-2 px-3 rounded-xl text-base shadow">
+                        ✕
+                    </button>
+                </div>
+            </div>
+
+            <!-- ÁREA DO DESENHO COSTURADO CONTINUO (CANVAS SCROLLABLE) -->
+            <div id="friso-viewport" class="flex-grow my-3 bg-slate-950 rounded-2xl border-2 border-purple-900/50 overflow-y-auto overflow-x-hidden relative custom-scroll flex justify-center items-start p-4">
+                <div id="friso-canvas-container" class="transition-transform duration-200 origin-top flex flex-col items-center">
+                    <!-- O Canvas gigante costurado é injetado via JS -->
+                </div>
+            </div>
+
+            <!-- Rodapé de Ações do Friso -->
+            <div class="flex flex-wrap items-center justify-between gap-3 border-t-2 border-slate-800 pt-3 bg-slate-900">
+                <div class="text-xs text-purple-300 font-bold flex items-center gap-2">
+                    <span>💡 Desliza com o dedo para ver do início ao fim!</span>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap ml-auto">
+                    <button onclick="Modules.desenho_cadeia.downloadFrisoImage()" class="btn-bounce bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2.5 rounded-2xl text-xs sm:text-sm shadow flex items-center gap-2">
+                        <i class="fa-solid fa-download"></i>
+                        <span>Descarregar Imagem</span>
+                    </button>
+                    <button onclick="Modules.desenho_cadeia.saveFrisoToMural()" class="btn-bounce bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-5 py-2.5 rounded-2xl text-xs sm:text-sm shadow flex items-center gap-2">
+                        <span>✨ Guardar no Mural da Sala</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RODAPÉ -->
+    <footer class="bg-amber-100 border-t-2 border-amber-200 py-3 text-center text-xs text-amber-800">
+        <p class="font-bold">Ateliê do Mundo • Projeto Educativo Intercultural e Inclusivo (3 a 6 anos)</p>
+        <p class="text-slate-500 mt-0.5">Linguagem Simples • Acessibilidade Multissensorial • Aprendizagem Auto-guiada</p>
+    </footer>
+
+    <script>
+        /* =====================================================================
+           NÚCLEO DA APLICAÇÃO (CORE SYSTEM)
+           ===================================================================== */
+        const Modules = {};
+
+        const Core = {
+            currentScreen: 'home',
+            currentLang: 'pt',
+            soundEnabled: true,
+            highContrast: false,
+            calmMode: false,
+            dyslexicFont: false,
+            lgpEnabled: false,
+            currentFichaObraAudioText: '',
+            currentFichaObraData: null,
+            mcType: 'desenho',
+            mcPhotoDataUrl: null,
+            mcAudioDataUrl: null,
+            mediaRecorder: null,
+            audioChunks: [],
+            isRecording: false,
+
+            i18n: {
+                pt: {
+                    title: "Ateliê do Mundo",
+                    home: "Início",
+                    draw: "Desenho Infinito",
+                    culture: "A Minha Cultura",
+                    mural: "Mural",
+                    welcome: "Bem-vindo ao Ateliê do Mundo! Escolhe um jogo para começar.",
+                    whatToCreate: "O Que Vamos Criar Hoje?",
+                    badge: "✨ Explora, Pinta, Toca e Descobre!",
+                    subtitle: "Escolhe um dos cantinhos do mundo para jogar livremente.",
+                    gameDrawTitle: "Desenho Infinito (2 a 36 Crianças)",
+                    gameDrawDesc: "Desenha com o teu dedo, passa o tablet ao colega e constrói uma obra gigante em cadeia!",
+                    gameDrawBtn: "Desenhar sem Parar! 🚀",
+                    gameMinhoTitle: "Lenço dos Namorados",
+                    gameMinhoDesc: "Borda com o teu dedo, desenha corações e repete padrões do Minho.",
+                    gameMinhoBtn: "Bordar Agora!",
+                    gameLisboaTitle: "Fado & Guitarra",
+                    gameLisboaDesc: "Toca nas 6 cordas coloridas da guitarra e ouve a tua própria criação musical!",
+                    gameLisboaBtn: "Tocar Guitarra!",
+                    gameAfricaTitle: "Máscaras Tradicionais",
+                    gameAfricaDesc: "Jogo de memória com máscaras da Nigéria, Mali, Congo e Moçambique.",
+                    gameAfricaBtn: "Jogar Memória!",
+                    gameJapaoTitle: "Caça ao Tesouro no Pagode",
+                    gameJapaoDesc: "Encontra objetos tradicionais escondidos no cenário do Pagode Japonês!",
+                    gameJapaoBtn: "Procurar Tesouros!",
+                    gameMadeiraTitle: "Casas de Santana",
+                    gameMadeiraDesc: "Pinta a preto e branco as casas triangulares, montanhas, árvores e levadas!",
+                    gameMadeiraBtn: "Pintar Paisagem!",
+                    gameMuralTitle: "Mural da Sala",
+                    gameMuralDesc: "Vê todas as criações guardadas e as obras partilhadas pelas famílias.",
+                    gameMuralBtn: "Ver Mural Completo",
+                    footer: "Ateliê do Mundo • Projeto Educativo Intercultural e Inclusivo (3 a 6 anos)"
+                },
+                en: {
+                    title: "World Atelier",
+                    home: "Home",
+                    draw: "Infinite Drawing",
+                    culture: "My Culture",
+                    mural: "Gallery",
+                    welcome: "Welcome to World Atelier! Choose a game to begin.",
+                    whatToCreate: "What Shall We Create Today?",
+                    badge: "✨ Explore, Paint, Touch and Discover!",
+                    subtitle: "Choose one of the corners of the world to play freely.",
+                    gameDrawTitle: "Infinite Drawing (2 to 36 Kids)",
+                    gameDrawDesc: "Draw with your finger, pass the tablet to a classmate, and create a giant collective canvas!",
+                    gameDrawBtn: "Draw Non-Stop! 🚀",
+                    gameMinhoTitle: "Sweetheart Handkerchief",
+                    gameMinhoDesc: "Embroider with your finger, draw hearts, and repeat traditional patterns.",
+                    gameMinhoBtn: "Start Embroidery!",
+                    gameLisboaTitle: "Fado & Guitar",
+                    gameLisboaDesc: "Pluck the 6 colorful guitar strings and listen to your musical creation!",
+                    gameLisboaBtn: "Play Guitar!",
+                    gameAfricaTitle: "Traditional Masks",
+                    gameAfricaDesc: "Memory game with masks from Nigeria, Mali, Congo, and Mozambique.",
+                    gameAfricaBtn: "Play Memory Game!",
+                    gameJapaoTitle: "Pagoda Treasure Hunt",
+                    gameJapaoDesc: "Find hidden traditional objects inside the Japanese Pagoda scene!",
+                    gameJapaoBtn: "Find Treasures!",
+                    gameMadeiraTitle: "Santana Houses",
+                    gameMadeiraDesc: "Color the triangular houses, mountains, trees, and levadas!",
+                    gameMadeiraBtn: "Paint Landscape!",
+                    gameMuralTitle: "Classroom Gallery",
+                    gameMuralDesc: "Explore all saved artworks and shared family traditions.",
+                    gameMuralBtn: "View Full Gallery",
+                    footer: "World Atelier • Intercultural & Inclusive Educational Project (Ages 3 to 6)"
+                },
+                es: {
+                    title: "Taller del Mundo",
+                    home: "Inicio",
+                    draw: "Dibujo Infinito",
+                    culture: "Mi Cultura",
+                    mural: "Mural",
+                    welcome: "¡Bienvenido al Taller del Mundo! Elige un juego para comenzar.",
+                    whatToCreate: "¿Qué Vamos a Crear Hoy?",
+                    badge: "✨ ¡Explora, Pinta, Toca y Descubre!",
+                    subtitle: "Elige uno de los rincones del mundo para jugar libremente.",
+                    gameDrawTitle: "Dibujo Infinito (2 a 36 Niños)",
+                    gameDrawDesc: "¡Dibuja con tu dedo, pasa la tableta a tu compañero y crea un mural gigante en cadena!",
+                    gameDrawBtn: "¡Dibujar sin Parar! 🚀",
+                    gameMinhoTitle: "Pañuelo de los Enamorados",
+                    gameMinhoDesc: "Borda con tu dedo, dibuja corazones y repite patrones tradicionales.",
+                    gameMinhoBtn: "¡Bordar Ahora!",
+                    gameLisboaTitle: "Fado y Guitarra",
+                    gameLisboaDesc: "¡Toca las 6 cuerdas de colores y escucha tu propia creación musical!",
+                    gameLisboaBtn: "¡Tocar Guitarra!",
+                    gameAfricaTitle: "Máscaras Tradicionales",
+                    gameAfricaDesc: "Juego de memoria con máscaras de Nigeria, Malí, Congo y Mozambique.",
+                    gameAfricaBtn: "¡Jugar Memoria!",
+                    gameJapaoTitle: "Búsqueda del Tesoro en la Pagoda",
+                    gameJapaoDesc: "¡Encuentra objetos tradicionales escondidos en el escenario de la Pagoda!",
+                    gameJapaoBtn: "¡Buscar Tesoros!",
+                    gameMadeiraTitle: "Casas de Santana",
+                    gameMadeiraDesc: "¡Pinta las casas triangulares, las montañas, los árboles y las levadas!",
+                    gameMadeiraBtn: "¡Pintar Paisaje!",
+                    gameMuralTitle: "Mural de la Clase",
+                    gameMuralDesc: "Mira todas las obras guardadas y las tradiciones compartidas por las familias.",
+                    gameMuralBtn: "Ver Mural Completo",
+                    footer: "Taller del Mundo • Proyecto Educativo Intercultural e Inclusivo (3 a 6 años)"
+                }
+            },
+
+            t(key) {
+                return (this.i18n[this.currentLang] && this.i18n[this.currentLang][key]) || this.i18n['pt'][key] || key;
+            },
+
+            setLanguage(lang) {
+                this.currentLang = lang;
+                ['pt', 'en', 'es'].forEach(l => {
+                    const btn = document.getElementById(`lang-btn-${l}`);
+                    if (btn) {
+                        if (l === lang) {
+                            btn.className = "px-2 py-1 rounded-xl text-xs font-bold bg-amber-400 text-amber-950 shadow-sm transition-all";
+                        } else {
+                            btn.className = "px-2 py-1 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 transition-all";
+                        }
+                    }
+                });
+
+                // Update Header Labels
+                const hTitle = document.getElementById('header-title');
+                if (hTitle) hTitle.innerText = this.t('title');
+                const btnDraw = document.getElementById('header-btn-draw');
+                if (btnDraw) btnDraw.innerText = this.t('draw');
+                const btnCult = document.getElementById('header-btn-culture');
+                if (btnCult) btnCult.innerText = this.t('culture');
+                const btnMur = document.getElementById('header-btn-mural');
+                if (btnMur) btnMur.innerText = this.t('mural');
+
+                // Re-render current view with selected language
+                this.navigateTo(this.currentScreen);
+                this.speakText(this.t('welcome'));
+            },
+
+            muralObras: [
+                {
+                    id: 'mural-1',
+                    titulo: 'Lenço do Amor Tradicional',
+                    regiao: 'Minho, Portugal',
+                    autor: 'Mariana (5 anos)',
+                    paraQue: 'Declarar afeto a um amigo ou familiar',
+                    materiais: 'Linha de algodão colorido e pano',
+                    significado: 'Cada símbolo desenhado é uma mensagem de carinho',
+                    imagemSvg: `<svg viewBox="0 0 100 100" class="w-full h-full"><rect width="100" height="100" fill="#fdfbf7" stroke="#e2e8f0"/><path d="M 50 30 Q 30 10 20 30 Q 10 50 50 80 Q 90 50 80 30 Q 70 10 50 30 Z" fill="#ef4444"/><text x="50" y="92" font-size="8" text-anchor="middle" fill="#1e293b">Amor</text></svg>`,
+                    data: '2026-09-20'
+                },
+                {
+                    id: 'mural-2',
+                    titulo: 'Máscara Gélédé de Celebração',
+                    regiao: 'Nigéria (África Ocidental)',
+                    autor: 'Comunidade Yoruba / Lucas',
+                    paraQue: 'Homenagear as mães e as mulheres anciãs da aldeia',
+                    materiais: 'Madeira esculpida e tintas de minerais',
+                    significado: 'Representa a sabedoria das mulheres e a harmonia',
+                    imagemSvg: `<svg viewBox="0 0 100 100" class="w-full h-full"><rect width="100" height="100" fill="#fef3c7"/><circle cx="50" cy="50" r="35" fill="#d97706"/><ellipse cx="38" cy="42" rx="5" ry="3" fill="#fff"/><ellipse cx="62" cy="42" rx="5" ry="3" fill="#fff"/><path d="M 40 65 Q 50 75 60 65" stroke="#78350f" stroke-width="3" fill="none"/></svg>`,
+                    data: '2026-09-21'
+                }
+            ],
+
+            init() {
+                this.renderHomeScreen();
+                this.setupMcCanvas();
+                this.speakText(this.t('welcome'));
+            },
+
+            navigateTo(screenId) {
+                this.currentScreen = screenId;
+                const container = document.getElementById('app-container');
+                
+                if (screenId === 'home') {
+                    this.renderHomeScreen();
+                } else if (screenId === 'mural') {
+                    this.renderMuralScreen();
+                } else if (Modules[screenId]) {
+                    Modules[screenId].start(container);
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            },
+
+            renderHomeScreen() {
+                const container = document.getElementById('app-container');
+                const titleText = this.t('whatToCreate');
+                const subtitleText = this.t('subtitle');
+
+                container.innerHTML = `
+                    <section class="text-center mb-8">
+                        <div class="inline-block bg-amber-100 text-amber-900 px-4 py-1.5 rounded-full font-bold text-sm mb-3 shadow-sm border border-amber-200">
+                            ${this.t('badge')}
+                        </div>
+                        <h2 class="text-3xl sm:text-5xl font-black text-amber-900 tracking-tight flex items-center justify-center gap-2">
+                            ${titleText}
+                            ${this.renderAudioBtn(titleText)}
+                        </h2>
+                        <p class="text-slate-600 max-w-xl mx-auto mt-2 text-base sm:text-lg flex items-center justify-center">
+                            ${subtitleText}
+                            ${this.renderAudioBtn(subtitleText)}
+                        </p>
+                    </section>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- JOGO NOVO: DESENHO EM CADEIA INFINDÁVEL -->
+                        <div onclick="Core.navigateTo('desenho_cadeia')" class="btn-bounce bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-3xl p-5 shadow-xl border-4 border-purple-300 hover:border-purple-100 cursor-pointer flex flex-col justify-between group relative overflow-hidden transform hover:-translate-y-1">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="bg-white/20 backdrop-blur text-white text-xs font-bold px-3 py-1 rounded-full">3 a 6 Anos 🎨</span>
+                                ${this.renderAudioBtn(this.t('gameDrawTitle'))}
+                            </div>
+                            <div class="text-6xl mb-4 group-hover:scale-110 transition-transform text-center">🎨➰</div>
+                            <div>
+                                <h3 class="text-2xl font-black text-white mb-1">${this.t('gameDrawTitle')}</h3>
+                                <p class="text-purple-100 text-sm mb-4">${this.t('gameDrawDesc')}</p>
+                            </div>
+                            <div class="bg-white text-purple-900 font-extrabold py-3 rounded-xl text-center shadow-md">${this.t('gameDrawBtn')}</div>
+                        </div>
+
+                        <!-- JOGO 1: MINHO -->
+                        <div onclick="Core.navigateTo('minho')" class="btn-bounce bg-white rounded-3xl p-5 shadow-lg border-4 border-rose-300 hover:border-rose-500 cursor-pointer flex flex-col justify-between group relative overflow-hidden">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="bg-rose-100 text-rose-800 text-xs font-bold px-3 py-1 rounded-full">Minho 🇵🇹</span>
+                                ${this.renderAudioBtn(this.t('gameMinhoTitle'))}
+                            </div>
+                            <div class="text-6xl mb-4 group-hover:scale-110 transition-transform text-center">🧵</div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-slate-800 mb-1">${this.t('gameMinhoTitle')}</h3>
+                                <p class="text-slate-500 text-sm mb-4">${this.t('gameMinhoDesc')}</p>
+                            </div>
+                            <div class="bg-rose-500 text-white font-bold py-2.5 rounded-xl text-center shadow">${this.t('gameMinhoBtn')}</div>
+                        </div>
+
+                        <!-- JOGO 2: LISBOA -->
+                        <div onclick="Core.navigateTo('lisboa')" class="btn-bounce bg-white rounded-3xl p-5 shadow-lg border-4 border-amber-300 hover:border-amber-500 cursor-pointer flex flex-col justify-between group relative overflow-hidden">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full">Lisboa 🇵🇹</span>
+                                ${this.renderAudioBtn(this.t('gameLisboaTitle'))}
+                            </div>
+                            <div class="text-6xl mb-4 group-hover:scale-110 transition-transform text-center">🎸</div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-slate-800 mb-1">${this.t('gameLisboaTitle')}</h3>
+                                <p class="text-slate-500 text-sm mb-4">${this.t('gameLisboaDesc')}</p>
+                            </div>
+                            <div class="bg-amber-500 text-white font-bold py-2.5 rounded-xl text-center shadow">${this.t('gameLisboaBtn')}</div>
+                        </div>
+
+                        <!-- JOGO 3: ÁFRICA -->
+                        <div onclick="Core.navigateTo('africa')" class="btn-bounce bg-white rounded-3xl p-5 shadow-lg border-4 border-emerald-300 hover:border-emerald-500 cursor-pointer flex flex-col justify-between group relative overflow-hidden">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full">África 🌍</span>
+                                ${this.renderAudioBtn(this.t('gameAfricaTitle'))}
+                            </div>
+                            <div class="text-6xl mb-4 group-hover:scale-110 transition-transform text-center">🎭</div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-slate-800 mb-1">${this.t('gameAfricaTitle')}</h3>
+                                <p class="text-slate-500 text-sm mb-4">${this.t('gameAfricaDesc')}</p>
+                            </div>
+                            <div class="bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-center shadow">${this.t('gameAfricaBtn')}</div>
+                        </div>
+
+                        <!-- JOGO 4: JAPÃO -->
+                        <div onclick="Core.navigateTo('japao')" class="btn-bounce bg-white rounded-3xl p-5 shadow-lg border-4 border-indigo-300 hover:border-indigo-500 cursor-pointer flex flex-col justify-between group relative overflow-hidden">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-3 py-1 rounded-full">Japão 🇯🇵</span>
+                                ${this.renderAudioBtn(this.t('gameJapaoTitle'))}
+                            </div>
+                            <div class="text-6xl mb-4 group-hover:scale-110 transition-transform text-center">🏮</div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-slate-800 mb-1">${this.t('gameJapaoTitle')}</h3>
+                                <p class="text-slate-500 text-sm mb-4">${this.t('gameJapaoDesc')}</p>
+                            </div>
+                            <div class="bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-center shadow">${this.t('gameJapaoBtn')}</div>
+                        </div>
+
+                        <!-- JOGO 5: MADEIRA -->
+                        <div onclick="Core.navigateTo('madeira')" class="btn-bounce bg-white rounded-3xl p-5 shadow-lg border-4 border-cyan-300 hover:border-cyan-500 cursor-pointer flex flex-col justify-between group relative overflow-hidden">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="bg-cyan-100 text-cyan-800 text-xs font-bold px-3 py-1 rounded-full">Madeira 🇵🇹</span>
+                                ${this.renderAudioBtn(this.t('gameMadeiraTitle'))}
+                            </div>
+                            <div class="text-6xl mb-4 group-hover:scale-110 transition-transform text-center">🏠</div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-slate-800 mb-1">${this.t('gameMadeiraTitle')}</h3>
+                                <p class="text-slate-500 text-sm mb-4">${this.t('gameMadeiraDesc')}</p>
+                            </div>
+                            <div class="bg-cyan-500 text-white font-bold py-2.5 rounded-xl text-center shadow">${this.t('gameMadeiraBtn')}</div>
+                        </div>
+
+                        <!-- MURAL DA SALA -->
+                        <div onclick="Core.navigateTo('mural')" class="btn-bounce bg-gradient-to-br from-amber-400 to-rose-400 text-white rounded-3xl p-5 shadow-lg cursor-pointer flex flex-col justify-between group">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="bg-white/20 text-white text-xs font-bold px-3 py-1 rounded-full">${this.t('mural')}</span>
+                                ${this.renderAudioBtn(this.t('gameMuralTitle'))}
+                            </div>
+                            <div class="text-6xl mb-4 group-hover:scale-110 transition-transform text-center">🖼️</div>
+                            <div>
+                                <h3 class="text-2xl font-bold mb-1">${this.t('gameMuralTitle')}</h3>
+                                <p class="text-amber-100 text-sm mb-4">${this.t('gameMuralDesc')}</p>
+                            </div>
+                            <div class="bg-white text-amber-900 font-bold py-2.5 rounded-xl text-center shadow">${this.t('gameMuralBtn')}</div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            renderMuralScreen() {
+                const container = document.getElementById('app-container');
+                container.innerHTML = `
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                        <div>
+                            <h2 class="text-3xl font-bold text-amber-900 flex items-center gap-2">
+                                🖼️ Mural Virtual da Sala
+                                ${this.renderAudioBtn("Mural Virtual da Sala. Aqui podes ver e imprimir as fichas de obra de todas as criações.")}
+                            </h2>
+                            <p class="text-slate-600 text-sm">Todas as obras criadas pelas crianças e famílias do ateliê.</p>
+                        </div>
+                        <button onclick="Core.imprimirMuralCompleto()" class="btn-bounce bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2.5 rounded-2xl text-xs sm:text-sm shadow-md border-b-4 border-indigo-800 flex items-center gap-2">
+                            <i class="fa-solid fa-print text-base"></i>
+                            <span>Imprimir Mural Completo</span>
+                        </button>
+                    </div>
+
+                    <div id="mural-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        ${this.muralObras.map(obra => `
+                            <div class="bg-white rounded-3xl p-4 shadow-md border-2 border-amber-200 flex flex-col justify-between">
+                                <div>
+                                    <div class="h-44 rounded-2xl overflow-hidden mb-3 bg-amber-50 flex items-center justify-center p-2 border border-amber-100">
+                                        ${obra.imagemSvg}
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs font-bold bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full">${obra.regiao}</span>
+                                        ${this.renderAudioBtn(`${obra.titulo}. Criado por ${obra.autor}.`)}
+                                    </div>
+                                    <h3 class="text-xl font-bold text-slate-800 mt-2">${obra.titulo}</h3>
+                                    <p class="text-xs text-slate-500 mb-2">Por: ${obra.autor}</p>
+                                    ${obra.audioUrl ? `<audio controls src="${obra.audioUrl}" class="w-full mt-2 h-9 rounded-xl"></audio>` : ''}
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 mt-3">
+                                    <button onclick="Core.openFichaObraDirect('${obra.id}')" class="btn-bounce bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 rounded-xl text-xs sm:text-sm shadow flex items-center justify-center gap-1">
+                                        <span>📋 Ficha</span>
+                                    </button>
+                                    <button onclick="Core.imprimirObra('${obra.id}')" class="btn-bounce bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl text-xs sm:text-sm shadow flex items-center justify-center gap-1">
+                                        <i class="fa-solid fa-print text-xs"></i>
+                                        <span>Imprimir</span>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                this.speakText("Mural Virtual da Sala. Podes ver e imprimir as obras.");
+            },
+
+            openFichaObra(obraData) {
+                this.currentFichaObraData = obraData;
+                document.getElementById('fo-titulo').innerText = obraData.titulo;
+                document.getElementById('fo-regiao').innerText = obraData.regiao;
+                document.getElementById('fo-quem').innerText = obraData.quem;
+                document.getElementById('fo-para-que').innerText = obraData.paraQue;
+                document.getElementById('fo-materiais').innerText = obraData.materiais;
+                document.getElementById('fo-significado').innerText = obraData.significado;
+
+                document.getElementById('fo-quem-btn').innerHTML = this.renderAudioBtn(`Quem fez: ${obraData.quem}`);
+                document.getElementById('fo-para-que-btn').innerHTML = this.renderAudioBtn(`Para quê serve: ${obraData.paraQue}`);
+                document.getElementById('fo-materiais-btn').innerHTML = this.renderAudioBtn(`Materiais: ${obraData.materiais}`);
+                document.getElementById('fo-significado-btn').innerHTML = this.renderAudioBtn(`Significado: ${obraData.significado}`);
+                
+                const imgContainer = document.getElementById('fo-imagem-container');
+                imgContainer.innerHTML = obraData.imagemSvg || `<span class="text-6xl">🎨</span>`;
+
+                this.currentFichaObraAudioText = `${obraData.titulo}. Origem: ${obraData.regiao}. Feito por ${obraData.quem}. Serve para ${obraData.paraQue}. Materiais: ${obraData.materiais}. Significado: ${obraData.significado}`;
+
+                document.getElementById('ficha-obra-modal').classList.remove('hidden');
+                this.speakText(`Ficha de obra: ${obraData.titulo}`);
+            },
+
+            openFichaObraDirect(id) {
+                const obra = this.muralObras.find(o => o.id === id);
+                if (obra) {
+                    this.openFichaObra({
+                        titulo: obra.titulo,
+                        regiao: obra.regiao,
+                        quem: obra.autor,
+                        paraQue: obra.paraQue,
+                        materiais: obra.materiais,
+                        significado: obra.significado,
+                        imagemSvg: obra.imagemSvg
+                    });
+                }
+            },
+
+            imprimirFichaObraAtual() {
+                if (this.currentFichaObraData) {
+                    this.imprimirObraObjeto(this.currentFichaObraData);
+                }
+            },
+
+            imprimirObra(id) {
+                const obra = this.muralObras.find(o => o.id === id);
+                if (obra) {
+                    this.imprimirObraObjeto({
+                        titulo: obra.titulo,
+                        regiao: obra.regiao,
+                        quem: obra.autor,
+                        paraQue: obra.paraQue,
+                        materiais: obra.materiais,
+                        significado: obra.significado,
+                        imagemSvg: obra.imagemSvg
+                    });
+                }
+            },
+
+            imprimirObraObjeto(obra) {
+                const printWindow = window.open('', '_blank');
+                if (!printWindow) return;
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html lang="pt-PT">
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>Ateliê do Mundo - ${obra.titulo}</title>
+                        <style>
+                            @page { size: A4; margin: 12mm; }
+                            body { font-family: 'Fredoka', 'Segoe UI', Arial, sans-serif; padding: 10px; color: #1e293b; background: #fff; }
+                            .card { border: 4px solid #f59e0b; border-radius: 20px; padding: 24px; max-width: 680px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+                            .header { text-align: center; border-bottom: 2px solid #fef3c7; padding-bottom: 12px; margin-bottom: 16px; }
+                            h1 { color: #78350f; margin: 0 0 6px 0; font-size: 26px; }
+                            .sub { color: #64748b; font-size: 14px; font-weight: bold; }
+                            .img-box { width: 100%; height: 260px; border: 2px dashed #fcd34d; border-radius: 16px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 20px; background: #fffbeb; text-align: center; }
+                            .img-box img, .img-box svg { max-width: 100%; max-height: 100%; object-fit: contain; margin: 0 auto; display: block; }
+                            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+                            .item { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 14px; padding: 12px; }
+                            .item-quem { background: #fffbeb; border-color: #fde68a; }
+                            .item-para { background: #fff1f2; border-color: #fecdd3; }
+                            .item-mat { background: #eff6ff; border-color: #bfdbfe; }
+                            .item-sig { background: #ecfdf5; border-color: #a7f3d0; }
+                            .label { font-weight: bold; font-size: 13px; margin-bottom: 6px; }
+                            .val { font-size: 14px; color: #1e293b; line-height: 1.4; }
+                            .footer { text-align: center; font-size: 11px; color: #94a3b8; margin-top: 24px; border-top: 1px solid #e2e8f0; padding-top: 12px; font-weight: bold; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="card">
+                            <div class="header">
+                                <h1>🌍 ${obra.titulo}</h1>
+                                <div class="sub">Origem Cultural: ${obra.regiao}</div>
+                            </div>
+                            <div class="img-box">${obra.imagemSvg || '<span style="font-size:60px;">🎨</span>'}</div>
+                            <div class="grid">
+                                <div class="item item-quem"><div class="label" style="color:#92400e;">🧑‍🎨 1. Quem fez?</div><div class="val">${obra.quem || obra.autor}</div></div>
+                                <div class="item item-para"><div class="label" style="color:#9f1239;">🎯 2. Para quê?</div><div class="val">${obra.paraQue}</div></div>
+                                <div class="item item-mat"><div class="label" style="color:#1e40af;">🧵 3. Com que materiais?</div><div class="val">${obra.materiais}</div></div>
+                                <div class="item item-sig"><div class="label" style="color:#065f46;">❤️ 4. O que significa?</div><div class="val">${obra.significado}</div></div>
+                            </div>
+                            <div class="footer">Ateliê do Mundo • Projeto Educativo Intercultural e Inclusivo (3 a 6 anos)</div>
+                        </div>
+                        <script>
+                            window.onload = function() {
+                                setTimeout(function() {
+                                    window.print();
+                                    window.close();
+                                }, 300);
+                            };
+                        <\/script>
+                    </body>
+                    </html>
+                `);
+                printWindow.document.close();
+            },
+
+            imprimirMuralCompleto() {
+                const printWindow = window.open('', '_blank');
+                if (!printWindow) return;
+                const cardsHtml = this.muralObras.map(obra => `
+                    <div class="card">
+                        <div class="img-box">${obra.imagemSvg || '<span style="font-size:40px;">🎨</span>'}</div>
+                        <div class="title">${obra.titulo}</div>
+                        <div class="meta"><b>Por:</b> ${obra.autor} | <b>Origem:</b> ${obra.regiao}</div>
+                        <div class="desc"><b>Para quê:</b> ${obra.paraQue}</div>
+                        <div class="desc"><b>Materiais:</b> ${obra.materiais}</div>
+                    </div>
+                `).join('');
+
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html lang="pt-PT">
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>Ateliê do Mundo - Mural Virtual da Sala</title>
+                        <style>
+                            @page { size: A4; margin: 12mm; }
+                            body { font-family: 'Fredoka', 'Segoe UI', Arial, sans-serif; padding: 10px; color: #1e293b; background: #fff; }
+                            h1 { text-align: center; color: #78350f; font-size: 24px; margin-bottom: 4px; }
+                            p.sub { text-align: center; color: #64748b; font-size: 13px; margin-top: 0; margin-bottom: 20px; }
+                            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+                            .card { border: 2px solid #f59e0b; border-radius: 14px; padding: 12px; background: #fff; page-break-inside: avoid; }
+                            .img-box { width: 100%; height: 140px; border: 1px solid #fde68a; border-radius: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #fffbeb; margin-bottom: 8px; text-align: center; }
+                            .img-box img, .img-box svg { max-width: 100%; max-height: 100%; object-fit: contain; margin: 0 auto; display: block; }
+                            .title { font-weight: bold; color: #78350f; font-size: 15px; margin-bottom: 2px; }
+                            .meta { font-size: 11px; color: #475569; margin-bottom: 4px; }
+                            .desc { font-size: 11px; color: #334155; line-height: 1.3; }
+                            .footer { text-align: center; font-size: 11px; color: #94a3b8; margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 8px; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>🖼️ Mural Virtual da Sala - Ateliê do Mundo</h1>
+                        <p class="sub">Catálogo de Obras Interculturais e Inclusivas da Turma</p>
+                        <div class="grid">${cardsHtml}</div>
+                        <div class="footer">Ateliê do Mundo • Projeto Educativo Intercultural e Inclusivo (3 a 6 anos)</div>
+                        <script>
+                            window.onload = function() {
+                                setTimeout(function() {
+                                    window.print();
+                                    window.close();
+                                }, 300);
+                            };
+                        <\/script>
+                    </body>
+                    </html>
+                `);
+                printWindow.document.close();
+            },
+
+            closeFichaObra() {
+                document.getElementById('ficha-obra-modal').classList.add('hidden');
+            },
+
+            openMinhaCulturaModal() {
+                document.getElementById('minha-cultura-modal').classList.remove('hidden');
+                this.speakText("Modo A Minha Cultura Também Conta. Partilha uma tradição da tua família!");
+            },
+
+            closeMinhaCulturaModal() {
+                document.getElementById('minha-cultura-modal').classList.add('hidden');
+            },
+
+            setMcType(type) {
+                this.mcType = type;
+                document.getElementById('mc-btn-desenho').className = type === 'desenho' ? 'p-3 bg-rose-100 border-2 border-rose-400 rounded-2xl font-bold text-rose-800 flex flex-col items-center gap-1' : 'p-3 bg-slate-100 border-2 border-slate-200 rounded-2xl font-bold text-slate-700 flex flex-col items-center gap-1';
+                document.getElementById('mc-btn-foto').className = type === 'foto' ? 'p-3 bg-rose-100 border-2 border-rose-400 rounded-2xl font-bold text-rose-800 flex flex-col items-center gap-1' : 'p-3 bg-slate-100 border-2 border-slate-200 rounded-2xl font-bold text-slate-700 flex flex-col items-center gap-1';
+                document.getElementById('mc-btn-audio').className = type === 'audio' ? 'p-3 bg-rose-100 border-2 border-rose-400 rounded-2xl font-bold text-rose-800 flex flex-col items-center gap-1' : 'p-3 bg-slate-100 border-2 border-slate-200 rounded-2xl font-bold text-slate-700 flex flex-col items-center gap-1';
+                
+                document.getElementById('mc-area-desenho').style.display = type === 'desenho' ? 'block' : 'none';
+                document.getElementById('mc-area-foto').style.display = type === 'foto' ? 'block' : 'none';
+                document.getElementById('mc-area-audio').style.display = type === 'audio' ? 'block' : 'none';
+            },
+
+            handleFotoUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.mcPhotoDataUrl = e.target.result;
+                    const imgPreview = document.getElementById('mc-foto-preview');
+                    imgPreview.src = this.mcPhotoDataUrl;
+                    imgPreview.classList.remove('hidden');
+                    document.getElementById('mc-foto-placeholder').classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            },
+
+            async toggleAudioRecord() {
+                const recordBtnText = document.getElementById('mc-btn-record-text');
+                const recordBtn = document.getElementById('mc-btn-record');
+                const statusTxt = document.getElementById('mc-audio-status');
+                const audioPreview = document.getElementById('mc-audio-preview');
+
+                if (!this.isRecording) {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        this.mediaRecorder = new MediaRecorder(stream);
+                        this.audioChunks = [];
+
+                        this.mediaRecorder.ondataavailable = (event) => {
+                            if (event.data.size > 0) {
+                                this.audioChunks.push(event.data);
+                            }
+                        };
+
+                        this.mediaRecorder.onstop = () => {
+                            const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                                this.mcAudioDataUrl = reader.result;
+                                audioPreview.src = this.mcAudioDataUrl;
+                                audioPreview.classList.remove('hidden');
+                            };
+                            reader.readAsDataURL(audioBlob);
+                            stream.getTracks().forEach(track => track.stop());
+                        };
+
+                        this.mediaRecorder.start();
+                        this.isRecording = true;
+                        recordBtnText.innerText = 'A Gravar... Toca para Parar';
+                        recordBtn.classList.add('border-rose-500', 'bg-rose-50');
+                        statusTxt.innerText = '🔴 A gravar voz... Fala para o microfone!';
+                        this.speakText('A gravar a tua voz.');
+                    } catch (err) {
+                        alert('Não foi possível aceder ao microfone. Por favor permite o acesso no teu navegador.');
+                    }
+                } else {
+                    if (this.mediaRecorder && this.isRecording) {
+                        this.mediaRecorder.stop();
+                        this.isRecording = false;
+                        recordBtnText.innerText = 'Gravar de Novo';
+                        recordBtn.classList.remove('border-rose-500', 'bg-rose-50');
+                        statusTxt.innerText = '✅ Gravação concluída! Ouve o resultado abaixo:';
+                        this.speakText('Gravação concluída. Podes ouvir a gravação.');
+                    }
+                }
+            },
+
+            setupMcCanvas() {
+                setTimeout(() => {
+                    const canvas = document.getElementById('mc-canvas');
+                    if (!canvas) return;
+                    const ctx = canvas.getContext('2d');
+                    ctx.lineWidth = 4;
+                    ctx.lineCap = 'round';
+                    ctx.strokeStyle = '#e11d48';
+
+                    let drawing = false;
+                    const getPos = (e) => {
+                        const rect = canvas.getBoundingClientRect();
+                        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                        return { x: clientX - rect.left, y: clientY - rect.top };
+                    };
+
+                    const start = (e) => { drawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); };
+                    const move = (e) => { if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
+                    const stop = () => { drawing = false; };
+
+                    canvas.addEventListener('mousedown', start);
+                    canvas.addEventListener('mousemove', move);
+                    canvas.addEventListener('mouseup', stop);
+                    canvas.addEventListener('touchstart', start);
+                    canvas.addEventListener('touchmove', move);
+                    canvas.addEventListener('touchend', stop);
+                }, 300);
+            },
+
+            limparMcCanvas() {
+                const canvas = document.getElementById('mc-canvas');
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            },
+
+            salvarObraMinhaCultura(e) {
+                e.preventDefault();
+                const titulo = document.getElementById('mc-input-titulo').value;
+                const quem = document.getElementById('mc-input-quem').value;
+                const paraQue = document.getElementById('mc-input-para-que').value || 'Celebrar em família';
+                const materiais = document.getElementById('mc-input-materiais').value || 'Tradição familiar';
+
+                let imagemSvg = '';
+                let audioUrl = null;
+
+                if (this.mcType === 'desenho') {
+                    const canvas = document.getElementById('mc-canvas');
+                    const dataUrl = canvas ? canvas.toDataURL() : '';
+                    imagemSvg = `<img src="${dataUrl}" class="w-full h-full object-contain" alt="${titulo}">`;
+                } else if (this.mcType === 'foto') {
+                    if (this.mcPhotoDataUrl) {
+                        imagemSvg = `<img src="${this.mcPhotoDataUrl}" class="w-full h-full object-cover rounded-2xl" alt="${titulo}">`;
+                    } else {
+                        imagemSvg = `<div class="text-6xl flex items-center justify-center h-full">📸</div>`;
+                    }
+                } else if (this.mcType === 'audio') {
+                    imagemSvg = `<div class="flex flex-col items-center justify-center h-full text-rose-500"><span class="text-6xl mb-2">🎤</span><span class="text-xs font-bold text-slate-700">História em Voz</span></div>`;
+                    audioUrl = this.mcAudioDataUrl;
+                }
+
+                const novaObra = {
+                    id: 'mural-' + Date.now(),
+                    titulo: titulo,
+                    regiao: 'Cultura Familiar',
+                    autor: quem,
+                    paraQue: paraQue,
+                    materiais: materiais,
+                    significado: 'Tradição especial partilhada com a sala',
+                    imagemSvg: imagemSvg,
+                    audioUrl: audioUrl,
+                    data: new Date().toISOString().split('T')[0]
+                };
+
+                this.muralObras.unshift(novaObra);
+                this.mcPhotoDataUrl = null;
+                this.mcAudioDataUrl = null;
+
+                this.closeMinhaCulturaModal();
+                this.navigateTo('mural');
+                this.speakText('A tua obra foi guardada no Mural da Sala!');
+            },
+
+            toggleAccessibilityPanel() {
+                document.getElementById('accessibility-panel').classList.toggle('hidden');
+            },
+
+            toggleHighContrast() {
+                this.highContrast = !this.highContrast;
+                document.body.classList.toggle('high-contrast', this.highContrast);
+                this.speakText(this.highContrast ? "Alto contraste ativado" : "Alto contraste desativado");
+            },
+
+            toggleCalmMode() {
+                this.calmMode = !this.calmMode;
+                document.body.classList.toggle('calm-mode', this.calmMode);
+                this.speakText(this.calmMode ? "Modo calmo ativado" : "Modo calmo desativado");
+            },
+
+            toggleDyslexicFont() {
+                this.dyslexicFont = !this.dyslexicFont;
+                document.body.classList.toggle('dyslexic-font', this.dyslexicFont);
+                this.speakText(this.dyslexicFont ? "Leitura fácil ativada" : "Fonte padrão ativada");
+            },
+
+            toggleLGPMode() {
+                this.lgpEnabled = !this.lgpEnabled;
+                this.speakText(this.lgpEnabled ? "Suporte Língua Gestual Portuguesa ativado" : "LGP desativado.");
+            },
+
+            toggleAudio() {
+                this.soundEnabled = !this.soundEnabled;
+                document.getElementById('sound-icon').className = this.soundEnabled ? 'fa-solid fa-volume-high text-xl' : 'fa-solid fa-volume-xmark text-xl text-rose-500';
+            },
+
+            speakText(text) {
+                if (!this.soundEnabled) return;
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    if (this.currentLang === 'en') {
+                        utterance.lang = 'en-US';
+                    } else if (this.currentLang === 'es') {
+                        utterance.lang = 'es-ES';
+                    } else {
+                        utterance.lang = 'pt-PT';
+                    }
+                    utterance.rate = 0.88;
+                    window.speechSynthesis.speak(utterance);
+                }
+            },
+
+            renderAudioBtn(text) {
+                const cleanText = text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                return `<button type="button" onclick="event.stopPropagation(); Core.speakText('${cleanText}')" class="btn-bounce inline-flex items-center justify-center bg-amber-400 hover:bg-amber-500 text-amber-950 w-7 h-7 sm:w-8 sm:h-8 rounded-full shadow-sm ml-1.5 font-bold text-xs border-2 border-amber-500 flex-shrink-0" title="Ouvir texto">
+                    <i class="fa-solid fa-volume-high"></i>
+                </button>`;
+            }
+        };
+
+        /* =====================================================================
+           MÓDULO: DESENHO INFINITO EM CADEIA (3 A 6 ANOS) - DE 2 A 36 CRIANÇAS
+           Visualização do resultado a partir do momento em que 2 crianças desenhem
+           ===================================================================== */
+        Modules['desenho_cadeia'] = {
+            id: 'desenho_cadeia',
+            version: '2.6',
+            title: 'Desenho Infinito em Cadeia (2 a 36 Crianças)',
+            colors: [
+                { hex: '#ef4444', icon: '🔴' }, // Vermelho
+                { hex: '#3b82f6', icon: '🔵' }, // Azul
+                { hex: '#facc15', icon: '🟡' }, // Amarelo
+                { hex: '#22c55e', icon: '🟢' }, // Verde
+                { hex: '#ec4899', icon: '🩷' }, // Rosa
+                { hex: '#000000', icon: '⚫' }  // Preto
+            ],
+            currentColor: '#ef4444',
+            isEraser: false,
+            maxChildren: 36,
+            turnCount: 1,
+            
+            // Buffer histórico de desenhos das crianças (máximo 36)
+            // Cada entrada: { turnNumber: 1, dataUrl: '...' }
+            turnsHistory: [],
+            zoomLevel: 1.0,
+            autoScrollInterval: null,
+            isAutoScrolling: false,
+
+            start(container) {
+                this.currentColor = '#ef4444';
+                this.isEraser = false;
+                if (this.turnsHistory.length === 0) {
+                    this.turnCount = 1;
+                } else {
+                    this.turnCount = this.turnsHistory.length + 1;
+                }
+                this.renderGame(container);
+            },
+
+            renderGame(container) {
+                const totalDrawingsDone = this.turnsHistory.length;
+                const canViewCollective = totalDrawingsDone >= 1; // Permite ver com pelo menos 1 desenho guardado (2ª criança em diante)
+
+                container.innerHTML = `
+                    <div class="max-w-4xl mx-auto flex flex-col items-center justify-center select-none py-2">
+                        
+                        <!-- PAINEL DE NAVEGAÇÃO E PROGRESSO DAS CRIANÇAS -->
+                        <div class="w-full flex flex-wrap items-center justify-between gap-2 mb-3 bg-white p-3 rounded-2xl border-2 border-purple-300 shadow-sm">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <!-- Botão Voltar ao Menu -->
+                                <button onclick="Core.navigateTo('home')" class="btn-bounce bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-3 py-2 rounded-xl text-xs sm:text-sm flex items-center gap-1.5 shadow-sm border border-slate-300">
+                                    <i class="fa-solid fa-arrow-left"></i>
+                                    <span>Voltar ao Menu</span>
+                                </button>
+
+                                <!-- Contador de Crianças -->
+                                <span class="bg-purple-600 text-white font-black px-3 py-1.5 rounded-xl text-xs sm:text-base flex items-center gap-1">
+                                    <span>🧑‍🎨 Criança ${this.turnCount} de ${this.maxChildren}</span>
+                                </span>
+                                ${Core.renderAudioBtn(`Criança número ${this.turnCount} de 36. Desenha na faixa e clica em Já está!`)}
+                            </div>
+
+                            <!-- Botão Ver Friso Coletivo -->
+                            <button onclick="Modules.desenho_cadeia.openFrisoModal()" 
+                                    id="btn-ver-friso"
+                                    class="btn-bounce ${canViewCollective ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg border-b-4 border-purple-800' : 'bg-slate-200 text-slate-400 cursor-not-allowed'} font-bold px-4 py-2 rounded-2xl text-xs sm:text-sm flex items-center gap-2">
+                                <span class="text-lg">📜</span>
+                                <span>Ver Friso (${totalDrawingsDone} ${totalDrawingsDone === 1 ? 'Desenho' : 'Desenhos'})</span>
+                                ${totalDrawingsDone >= 1 ? '<span class="flex h-3 w-3 relative"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-pink-500"></span></span>' : ''}
+                            </button>
+                        </div>
+
+                        <!-- ÁREA DE JOGO PRINCIPAL -->
+                        <div class="w-full bg-slate-900 rounded-3xl p-3 sm:p-5 shadow-2xl border-4 border-purple-400 relative overflow-hidden flex flex-col gap-3">
+                            
+                            <!-- 1. TIRA FINA SUPERIOR (2 cm ~ 60px) COM O FIM DO DESENHO DA CRIANÇA ANTERIOR -->
+                            <div class="relative w-full rounded-2xl overflow-hidden bg-amber-50 border-2 border-dashed border-amber-300 shadow-inner">
+                                <div class="absolute top-1 left-2 z-10 opacity-70 pointer-events-none text-xs font-bold bg-white/80 px-2 py-0.5 rounded-full text-slate-700">
+                                    👆 Linha da Criança ${this.turnCount > 1 ? this.turnCount - 1 : 1}
+                                </div>
+                                <canvas id="canvas-top-strip" class="w-full h-[60px] block bg-white cursor-not-allowed"></canvas>
+                            </div>
+
+                            <!-- 2. FAIXA BRANCA HORIZONTAL NO MEIO (ÁREA ONDE A CRIANÇA DESENHA) -->
+                            <div class="relative w-full rounded-2xl overflow-hidden bg-white shadow-md border-4 border-amber-400">
+                                <canvas id="canvas-active" class="w-full h-[280px] sm:h-[340px] block cursor-crosshair touch-none"></canvas>
+                            </div>
+
+                            <!-- 3. PAINEL INFERIOR DE CONTROLO (CORES, ESPONJA E "JÁ ESTÁ!") -->
+                            <div class="w-full flex flex-wrap items-center justify-between gap-3 bg-slate-800 p-3 sm:p-4 rounded-2xl border-2 border-slate-700">
+                                
+                                <!-- SELETOR DE CORES E ESPONJA -->
+                                <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                                    <!-- 6 Círculos de Cor -->
+                                    <div class="flex items-center gap-2 bg-slate-900/80 p-2 rounded-2xl border border-slate-700">
+                                        ${this.colors.map(c => `
+                                            <button onclick="Modules.desenho_cadeia.selectColor('${c.hex}')" 
+                                                    id="btn-color-${c.hex.replace('#','')}"
+                                                    style="background-color: ${c.hex};" 
+                                                    class="btn-bounce w-11 h-11 sm:w-14 sm:h-14 rounded-full border-4 ${this.currentColor === c.hex && !this.isEraser ? 'border-white scale-110 shadow-lg ring-4 ring-purple-400' : 'border-slate-800 opacity-90'} transition-all"
+                                                    aria-label="Escolher cor"></button>
+                                        `).join('')}
+                                    </div>
+
+                                    <!-- Esponja Grande (Borracha) -->
+                                    <button onclick="Modules.desenho_cadeia.selectEraser()" 
+                                            id="btn-sponge"
+                                            class="btn-bounce w-14 h-14 sm:w-16 sm:h-16 bg-amber-200 hover:bg-amber-300 border-4 ${this.isEraser ? 'border-white scale-110 ring-4 ring-amber-400' : 'border-amber-400'} rounded-2xl flex items-center justify-center text-3xl sm:text-4xl shadow-md transition-all"
+                                            title="Esponja Borracha">
+                                        🧽
+                                    </button>
+                                </div>
+
+                                <!-- Botão Grande «Já está!» no Canto Inferior Direito -->
+                                <button onclick="Modules.desenho_cadeia.finishTurn()" 
+                                        class="btn-bounce ml-auto bg-emerald-500 hover:bg-emerald-600 text-white font-black px-6 py-3 sm:px-8 sm:py-4 rounded-3xl text-2xl sm:text-3xl shadow-xl border-b-8 border-emerald-700 flex items-center gap-2 active:translate-y-1 active:border-b-4">
+                                    <span>Já está!</span>
+                                    <span class="text-3xl sm:text-4xl">👍</span>
+                                </button>
+                            </div>
+
+                        </div>
+
+                        <!-- Botão Reiniciar Friso Novo -->
+                        <div class="mt-3">
+                            <button onclick="Modules.desenho_cadeia.resetFriso()" class="text-xs text-slate-500 hover:text-slate-800 underline font-bold">
+                                🔄 Começar Novo Friso da Sala
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                this.initCanvases();
+            },
+
+            selectColor(hex) {
+                this.currentColor = hex;
+                this.isEraser = false;
+                this.updateUI();
+                Core.speakText("Cor nova!");
+            },
+
+            selectEraser() {
+                this.isEraser = true;
+                this.updateUI();
+                Core.speakText("Esponja!");
+            },
+
+            updateUI() {
+                this.colors.forEach(c => {
+                    const btn = document.getElementById(`btn-color-${c.hex.replace('#','')}`);
+                    if (btn) {
+                        if (!this.isEraser && this.currentColor === c.hex) {
+                            btn.className = "btn-bounce w-11 h-11 sm:w-14 sm:h-14 rounded-full border-4 border-white scale-110 shadow-lg ring-4 ring-purple-400 transition-all";
+                        } else {
+                            btn.className = "btn-bounce w-11 h-11 sm:w-14 sm:h-14 rounded-full border-4 border-slate-800 opacity-90 transition-all";
+                        }
+                    }
+                });
+
+                const spongeBtn = document.getElementById('btn-sponge');
+                if (spongeBtn) {
+                    if (this.isEraser) {
+                        spongeBtn.className = "btn-bounce w-14 h-14 sm:w-16 sm:h-16 bg-amber-300 border-4 border-white scale-110 ring-4 ring-amber-400 rounded-2xl flex items-center justify-center text-3xl sm:text-4xl shadow-md transition-all";
+                    } else {
+                        spongeBtn.className = "btn-bounce w-14 h-14 sm:w-16 sm:h-16 bg-amber-200 hover:bg-amber-300 border-4 border-amber-400 rounded-2xl flex items-center justify-center text-3xl sm:text-4xl shadow-md transition-all";
+                    }
+                }
+            },
+
+            initCanvases() {
+                setTimeout(() => {
+                    const canvasActive = document.getElementById('canvas-active');
+                    const canvasTop = document.getElementById('canvas-top-strip');
+                    if (!canvasActive || !canvasTop) return;
+
+                    const rect = canvasActive.parentElement.getBoundingClientRect();
+                    const width = rect.width || 700;
+
+                    canvasActive.width = width;
+                    canvasActive.height = 320;
+                    
+                    canvasTop.width = width;
+                    canvasTop.height = 60;
+
+                    const ctxActive = canvasActive.getContext('2d');
+                    const ctxTop = canvasTop.getContext('2d');
+
+                    // Fundo branco inicial
+                    ctxActive.fillStyle = '#ffffff';
+                    ctxActive.fillRect(0, 0, canvasActive.width, canvasActive.height);
+
+                    // Se existirem desenhos anteriores no histórico, carregar a tira de 60px do desenho anterior
+                    if (this.turnsHistory.length > 0) {
+                        const lastTurn = this.turnsHistory[this.turnsHistory.length - 1];
+                        const img = new Image();
+                        img.onload = () => {
+                            // Desenhar apenas os 60px inferiores do último desenho na tira superior
+                            ctxTop.drawImage(img, 0, img.height - 60, img.width, 60, 0, 0, canvasTop.width, 60);
+                        };
+                        img.src = lastTurn.dataUrl;
+                    } else {
+                        // Desenhar guia inicial de demonstração no 1º turno
+                        this.drawGuideOnTopStrip(ctxTop, canvasTop.width, canvasTop.height);
+                    }
+
+                    // Lógica de Desenho Tátil e Rato
+                    let drawing = false;
+
+                    const getPos = (e) => {
+                        const r = canvasActive.getBoundingClientRect();
+                        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                        return { x: clientX - r.left, y: clientY - r.top };
+                    };
+
+                    const startDraw = (e) => {
+                        drawing = true;
+                        ctxActive.beginPath();
+                        const pos = getPos(e);
+                        ctxActive.moveTo(pos.x, pos.y);
+
+                        ctxActive.lineWidth = this.isEraser ? 32 : 14;
+                        ctxActive.lineCap = 'round';
+                        ctxActive.lineJoin = 'round';
+                        ctxActive.strokeStyle = this.isEraser ? '#ffffff' : this.currentColor;
+                    };
+
+                    const moveDraw = (e) => {
+                        if (!drawing) return;
+                        const pos = getPos(e);
+                        ctxActive.lineTo(pos.x, pos.y);
+                        ctxActive.stroke();
+                    };
+
+                    const stopDraw = () => {
+                        drawing = false;
+                    };
+
+                    canvasActive.addEventListener('mousedown', startDraw);
+                    canvasActive.addEventListener('mousemove', moveDraw);
+                    canvasActive.addEventListener('mouseup', stopDraw);
+                    canvasActive.addEventListener('mouseleave', stopDraw);
+
+                    canvasActive.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e); }, { passive: false });
+                    canvasActive.addEventListener('touchmove', (e) => { e.preventDefault(); moveDraw(e); }, { passive: false });
+                    canvasActive.addEventListener('touchend', stopDraw);
+                }, 200);
+            },
+
+            drawGuideOnTopStrip(ctx, w, h) {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, w, h);
+
+                ctx.lineWidth = 12;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = '#ef4444';
+
+                ctx.beginPath();
+                ctx.moveTo(w * 0.2, 0);
+                ctx.lineTo(w * 0.2, h);
+
+                ctx.moveTo(w * 0.5, 0);
+                ctx.lineTo(w * 0.5, h);
+
+                ctx.moveTo(w * 0.8, 0);
+                ctx.lineTo(w * 0.8, h);
+                ctx.stroke();
+
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(0, h);
+                ctx.lineTo(w, h);
+                ctx.stroke();
+            },
+
+            finishTurn() {
+                const canvasActive = document.getElementById('canvas-active');
+                if (!canvasActive) return;
+
+                // 1. Capturar e guardar a imagem do desenho completo da criança atual
+                const dataUrl = canvasActive.toDataURL('image/png');
+                this.turnsHistory.push({
+                    turnNumber: this.turnCount,
+                    dataUrl: dataUrl
+                });
+
+                // 2. Notificação e feedback sonoro
+                const numTotal = this.turnsHistory.length;
+                
+                if (numTotal >= 2) {
+                    Core.speakText(`Excelente! A criança ${this.turnCount} terminou! Agora já podemos ver o Friso Infinito com ${numTotal} crianças!`);
+                    // Abrir automaticamente o visualizador coletivo a partir do 2º desenho
+                    setTimeout(() => {
+                        this.openFrisoModal();
+                    }, 600);
+                } else {
+                    Core.speakText(`Muito bem! Criança 1 guardada! Passa o tablet à criança seguinte!`);
+                }
+
+                // 3. Atualizar contador de turnos (até ao limite de 36)
+                if (this.turnCount < this.maxChildren) {
+                    this.turnCount++;
+                }
+
+                // 4. Recarregar o ecrã para a criança seguinte
+                const container = document.getElementById('app-container');
+                if (container) this.renderGame(container);
+            },
+
+            resetFriso() {
+                this.turnsHistory = [];
+                this.turnCount = 1;
+                const container = document.getElementById('app-container');
+                if (container) this.renderGame(container);
+                Core.speakText("Friso novo começado!");
+            },
+
+            openFrisoModal() {
+                if (this.turnsHistory.length === 0) {
+                    Core.speakText("Ainda não há desenhos para visualizar. Desenha primeiro!");
+                    return;
+                }
+
+                const modal = document.getElementById('friso-coletivo-modal');
+                const tagCount = document.getElementById('friso-tag-count');
+                const container = document.getElementById('friso-canvas-container');
+
+                if (tagCount) {
+                    tagCount.innerText = `${this.turnsHistory.length} ${this.turnsHistory.length === 1 ? 'Criança' : 'Crianças'}`;
+                }
+
+                // Criar o canvas gigante costurado em tempo real
+                container.innerHTML = '';
+                const width = 680;
+                const sliceHeight = 320;
+                const totalHeight = this.turnsHistory.length * sliceHeight;
+
+                const compositeCanvas = document.createElement('canvas');
+                compositeCanvas.width = width;
+                compositeCanvas.height = totalHeight;
+                compositeCanvas.className = 'shadow-2xl rounded-2xl bg-white border-4 border-purple-400';
+                compositeCanvas.id = 'composite-friso-canvas';
+
+                const ctx = compositeCanvas.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, width, totalHeight);
+
+                let loadedCount = 0;
+                this.turnsHistory.forEach((turn, idx) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        // Costurar verticalmente cada folha
+                        const yPos = idx * sliceHeight;
+                        ctx.drawImage(img, 0, yPos, width, sliceHeight);
+
+                        // Linha discreta de união
+                        if (idx > 0) {
+                            ctx.strokeStyle = 'rgba(168, 85, 247, 0.2)';
+                            ctx.lineWidth = 2;
+                            ctx.setLineDash([8, 4]);
+                            ctx.beginPath();
+                            ctx.moveTo(0, yPos);
+                            ctx.lineTo(width, yPos);
+                            ctx.stroke();
+                            ctx.setLineDash([]);
+                        }
+
+                        // Etiqueta com o número da criança na lateral
+                        ctx.fillStyle = '#8b5cf6';
+                        ctx.beginPath();
+                        ctx.arc(30, yPos + 30, 16, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = 'bold 12px Fredoka, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(`${turn.turnNumber}`, 30, yPos + 30);
+
+                        loadedCount++;
+                    };
+                    img.src = turn.dataUrl;
+                });
+
+                container.appendChild(compositeCanvas);
+
+                modal.classList.remove('hidden');
+                this.zoomLevel = 1.0;
+                this.applyZoom();
+                Core.speakText(`A visualizar o Friso Infinito Coletivo de ${this.turnsHistory.length} crianças!`);
+            },
+
+            closeFrisoModal() {
+                this.stopAutoScroll();
+                document.getElementById('friso-coletivo-modal').classList.add('hidden');
+            },
+
+            zoomFriso(delta) {
+                this.zoomLevel = Math.max(0.5, Math.min(2.0, this.zoomLevel + delta));
+                this.applyZoom();
+            },
+
+            applyZoom() {
+                const container = document.getElementById('friso-canvas-container');
+                if (container) {
+                    container.style.transform = `scale(${this.zoomLevel})`;
+                }
+            },
+
+            toggleAutoScroll() {
+                if (this.isAutoScrolling) {
+                    this.stopAutoScroll();
+                } else {
+                    this.startAutoScroll();
+                }
+            },
+
+            startAutoScroll() {
+                const viewport = document.getElementById('friso-viewport');
+                const btn = document.getElementById('btn-auto-scroll');
+                if (!viewport) return;
+
+                this.isAutoScrolling = true;
+                if (btn) btn.innerHTML = `<span>⏸️ Parar Rolo</span>`;
+
+                this.autoScrollInterval = setInterval(() => {
+                    if (viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight) {
+                        viewport.scrollTop = 0; // Reiniciar rolo ao chegar ao fim
+                    } else {
+                        viewport.scrollTop += 2;
+                    }
+                }, 30);
+                Core.speakText("Rolo automático ativado!");
+            },
+
+            stopAutoScroll() {
+                if (this.autoScrollInterval) {
+                    clearInterval(this.autoScrollInterval);
+                    this.autoScrollInterval = null;
+                }
+                this.isAutoScrolling = false;
+                const btn = document.getElementById('btn-auto-scroll');
+                if (btn) btn.innerHTML = `<span>🚀 Rolar Sozinho</span>`;
+            },
+
+            downloadFrisoImage() {
+                const compositeCanvas = document.getElementById('composite-friso-canvas');
+                if (!compositeCanvas) return;
+
+                const link = document.createElement('a');
+                link.download = `Friso-Infinito-${this.turnsHistory.length}-Criancas.png`;
+                link.href = compositeCanvas.toDataURL('image/png');
+                link.click();
+                Core.speakText("A descarregar a imagem do friso coletivo!");
+            },
+
+            saveFrisoToMural() {
+                const compositeCanvas = document.getElementById('composite-friso-canvas');
+                if (!compositeCanvas) return;
+
+                const dataUrl = compositeCanvas.toDataURL('image/png');
+                const count = this.turnsHistory.length;
+
+                const novaObra = {
+                    id: 'mural-' + Date.now(),
+                    titulo: `Friso Infinito Coletivo (${count} Crianças)`,
+                    regiao: 'Obra Colaborativa da Sala',
+                    autor: `Grupo das ${count} Crianças`,
+                    paraQue: 'Desenhar sem parar e unir linhas em cadeia',
+                    materiais: 'Ecrã tátil, cores vibrantes e cooperação',
+                    significado: 'Representa a união, continuidade e amizade da nossa sala',
+                    imagemSvg: `<img src="${dataUrl}" class="w-full h-full object-contain bg-white rounded-xl" alt="Friso Coletivo">`,
+                    data: new Date().toISOString().split('T')[0]
+                };
+
+                Core.muralObras.unshift(novaObra);
+                this.closeFrisoModal();
+                Core.navigateTo('mural');
+                Core.speakText(`O Friso Coletivo das ${count} crianças foi guardado com sucesso no Mural da Sala!`);
+            }
+        };
+
+        /* =====================================================================
+           OUTROS JOGOS CULTURAIS DO ATELIÊ DO MUNDO (MINHO, LISBOA, ÁFRICA, JAPÃO, MADEIRA)
+           ===================================================================== */
+        Modules['minho'] = {
+            id: 'minho',
+            start(container) {
+                container.innerHTML = `
+                    <div class="max-w-3xl mx-auto bg-white rounded-3xl p-6 shadow-xl border-4 border-rose-300 text-center">
+                        <span class="text-xs bg-rose-100 text-rose-800 font-bold px-3 py-1 rounded-full">Minho 🇵🇹</span>
+                        <h2 class="text-3xl font-bold text-rose-900 mt-2">🧵 Lenço dos Namorados</h2>
+                        <p class="text-slate-600 text-sm mt-1 mb-4">Borda com o teu dedo e desenha símbolos tradicionais!</p>
+                        <div class="bg-amber-50 border-2 border-dashed border-rose-300 rounded-3xl p-4 min-h-[300px] flex items-center justify-center">
+                            <span class="text-7xl">❤️🧵🌿</span>
+                        </div>
+                    </div>
+                `;
+            }
+        };
+
+        Modules['lisboa'] = {
+            id: 'lisboa',
+            start(container) {
+                container.innerHTML = `
+                    <div class="max-w-3xl mx-auto bg-white rounded-3xl p-6 shadow-xl border-4 border-amber-300 text-center">
+                        <span class="text-xs bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded-full">Lisboa 🇵🇹</span>
+                        <h2 class="text-3xl font-bold text-amber-900 mt-2">🎸 Fado & Guitarra Portuguesa</h2>
+                        <p class="text-slate-600 text-sm mt-1 mb-4">Toca nas cordas coloridas para compor melodia de Fado!</p>
+                        <div class="bg-amber-50 border-2 border-dashed border-amber-300 rounded-3xl p-4 min-h-[300px] flex items-center justify-center">
+                            <span class="text-7xl">🎶🎸🎼</span>
+                        </div>
+                    </div>
+                `;
+            }
+        };
+
+        Modules['africa'] = {
+            id: 'africa',
+            start(container) {
+                container.innerHTML = `
+                    <div class="max-w-3xl mx-auto bg-white rounded-3xl p-6 shadow-xl border-4 border-emerald-300 text-center">
+                        <span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-full">África 🌍</span>
+                        <h2 class="text-3xl font-bold text-emerald-900 mt-2">🎭 Máscaras Tradicionais</h2>
+                        <p class="text-slate-600 text-sm mt-1 mb-4">Jogo da memória com celebrações culturais reais!</p>
+                        <div class="bg-amber-50 border-2 border-dashed border-emerald-300 rounded-3xl p-4 min-h-[300px] flex items-center justify-center">
+                            <span class="text-7xl">🎭🌍✨</span>
+                        </div>
+                    </div>
+                `;
+            }
+        };
+
+        Modules['japao'] = {
+            id: 'japao',
+            start(container) {
+                container.innerHTML = `
+                    <div class="max-w-3xl mx-auto bg-white rounded-3xl p-6 shadow-xl border-4 border-indigo-300 text-center">
+                        <span class="text-xs bg-indigo-100 text-indigo-800 font-bold px-3 py-1 rounded-full">Japão 🇯🇵</span>
+                        <h2 class="text-3xl font-bold text-indigo-900 mt-2">🏮 Pagode Japonês</h2>
+                        <p class="text-slate-600 text-sm mt-1 mb-4">Caça ao tesouro tradicional escondido na paisagem!</p>
+                        <div class="bg-amber-50 border-2 border-dashed border-indigo-300 rounded-3xl p-4 min-h-[300px] flex items-center justify-center">
+                            <span class="text-7xl">🏯🌸🏮</span>
+                        </div>
+                    </div>
+                `;
+            }
+        };
+
+        Modules['madeira'] = {
+            id: 'madeira',
+            start(container) {
+                container.innerHTML = `
+                    <div class="max-w-3xl mx-auto bg-white rounded-3xl p-6 shadow-xl border-4 border-cyan-300 text-center">
+                        <span class="text-xs bg-cyan-100 text-cyan-800 font-bold px-3 py-1 rounded-full">Madeira 🇵🇹</span>
+                        <h2 class="text-3xl font-bold text-cyan-900 mt-2">🏠 Casas de Santana</h2>
+                        <p class="text-slate-600 text-sm mt-1 mb-4">Pinta as casas triangulares e as montanhas!</p>
+                        <div class="bg-amber-50 border-2 border-dashed border-cyan-300 rounded-3xl p-4 min-h-[300px] flex items-center justify-center">
+                            <span class="text-7xl">🏠⛰️🌿</span>
+                        </div>
+                    </div>
+                `;
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            Core.init();
+        });
+    </script>
+</body>
+</html>
