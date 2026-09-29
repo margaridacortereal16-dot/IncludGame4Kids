@@ -1,0 +1,3156 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ateliê do Mundo - Jogo Intercultural para Crianças</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Tone.js para Sons e Sintetizador Musical -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Canvas Confetti para Celebrações -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            blue: '#4A90E2',
+                            yellow: '#FFD166',
+                            green: '#06D6A0',
+                            pink: '#EF476F',
+                            purple: '#118AB2',
+                            cream: '#FFFDF9',
+                            darkText: '#2B2D42'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Comic Sans MS', 'Fredoka', 'Chalkboard SE', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #FFFDF9;
+            color: #2B2D42;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        /* Alto Contraste */
+        body.high-contrast {
+            background-color: #000000 !important;
+            color: #FFFF00 !important;
+        }
+        body.high-contrast .hc-element {
+            background-color: #000000 !important;
+            border: 4px solid #FFFF00 !important;
+            color: #FFFF00 !important;
+        }
+        body.high-contrast button {
+            background-color: #FFFF00 !important;
+            color: #000000 !important;
+            font-weight: bold !important;
+            border: 3px solid #FFFFFF !important;
+        }
+
+        /* Modo Calmo */
+        body.calm-mode {
+            background-color: #F4F1EA !important;
+            filter: saturate(0.6);
+        }
+        body.calm-mode * {
+            animation: none !important;
+            transition: none !important;
+        }
+
+        /* Texto Ampliado e Fonte de Leitura Fácil */
+        body.text-large {
+            font-size: 1.15rem;
+        }
+        body.text-xlarge {
+            font-size: 1.3rem;
+        }
+        body.font-dyslexic {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Arial Rounded MT Bold', sans-serif !important;
+            letter-spacing: 0.05em;
+            word-spacing: 0.1em;
+        }
+
+        /* Cursor e Foco Visual Ampliado */
+        body.big-cursor, body.big-cursor * {
+            cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 24 24' fill='%23EF476F' stroke='%23FFFFFF' stroke-width='2'><path d='M3 3l7 18 3-7 7-3L3 3z'/></svg>"), auto !important;
+        }
+        body.focus-highlight *:focus, body.focus-highlight *:active {
+            outline: 5px solid #FFD166 !important;
+            outline-offset: 4px;
+        }
+
+        /* Botões tácteis com relevo para crianças */
+        .btn-kid {
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.15);
+        }
+        .btn-kid:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 rgba(0,0,0,0.15);
+        }
+
+        /* Animações de Cartão e Efeitos */
+        @keyframes pulse-gentle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.04); }
+        }
+        .animate-pulse-gentle {
+            animation: pulse-gentle 2.2s infinite ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        canvas {
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans overflow-x-hidden">
+
+    <!-- BARRA SUPERIOR DO NÚCLEO -->
+    <header class="bg-brand-yellow/30 border-b-4 border-brand-yellow p-3 sm:p-4 flex flex-wrap justify-between items-center gap-2 z-40 relative hc-element">
+        <div class="flex items-center gap-3">
+            <button onclick="CoreApp.goHome()" class="btn-kid bg-brand-pink text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-lg sm:text-xl font-bold flex items-center gap-2" title="Início">
+                <i class="fa-solid fa-house"></i>
+                <span class="hidden sm:inline" id="nav-home-text">Início</span>
+            </button>
+            <h1 class="text-xl sm:text-2xl font-black text-brand-purple tracking-wide flex items-center gap-2">
+                <i class="fa-solid fa-palette text-brand-pink"></i>
+                <span>Ateliê do Mundo</span>
+            </h1>
+        </div>
+
+        <!-- Botões de Ação Global -->
+        <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <!-- Idiomas: Português, Inglês e Ucraniano -->
+            <div class="bg-white rounded-full p-1 border-2 border-gray-200 flex gap-1 shadow-sm hc-element">
+                <button onclick="CoreApp.setLanguage('pt')" id="lang-pt" class="px-3 py-1 rounded-full text-xs font-black bg-brand-blue text-white transition">PT</button>
+                <button onclick="CoreApp.setLanguage('en')" id="lang-en" class="px-3 py-1 rounded-full text-xs font-black text-gray-600 transition">EN</button>
+                <button onclick="CoreApp.setLanguage('uk')" id="lang-uk" class="px-3 py-1 rounded-full text-xs font-black text-gray-600 transition">UK</button>
+            </div>
+
+            <!-- Botão "A minha cultura também conta" -->
+            <button onclick="CoreApp.openCultureMode()" class="btn-kid bg-brand-green text-white px-3 py-2 sm:px-4 sm:py-2 rounded-2xl font-bold text-xs sm:text-sm flex items-center gap-2 animate-pulse-gentle">
+                <i class="fa-solid fa-heart text-base"></i>
+                <span id="nav-culture-text">A Minha Cultura Conta!</span>
+            </button>
+
+            <!-- Mural da Sala -->
+            <button onclick="CoreApp.openMural()" class="btn-kid bg-brand-blue text-white px-3 py-2 sm:px-4 sm:py-2 rounded-2xl font-bold text-xs sm:text-sm flex items-center gap-2">
+                <i class="fa-solid fa-images text-base"></i>
+                <span id="nav-mural-text">Mural da Sala</span>
+            </button>
+
+            <!-- Menu de Acessibilidade -->
+            <button onclick="AccessibilityModule.toggleMenu()" class="btn-kid bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-2xl font-black text-xs sm:text-sm flex items-center gap-2 shadow" title="Menu de Acessibilidade">
+                <i class="fa-solid fa-universal-access text-lg"></i>
+                <span class="hidden sm:inline">Acessibilidade</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- PAINEL DE ACESSIBILIDADE EXPANDIDO -->
+    <div id="accessibility-menu" class="hidden fixed top-16 right-3 sm:right-5 bg-white border-4 border-purple-600 p-4 sm:p-5 rounded-3xl shadow-2xl z-50 max-w-md w-full max-h-[85vh] overflow-y-auto hc-element">
+        <div class="flex justify-between items-center border-b-2 border-purple-200 pb-3 mb-3">
+            <h2 class="font-black text-lg sm:text-xl text-purple-900 flex items-center gap-2">
+                <i class="fa-solid fa-universal-access text-purple-600"></i> Central de Acessibilidade
+            </h2>
+            <button onclick="AccessibilityModule.toggleMenu()" class="text-gray-500 hover:text-black text-2xl font-bold p-1">&times;</button>
+        </div>
+
+        <div class="space-y-3 text-xs sm:text-sm">
+            <!-- 1. Leitor de Ecrã / Áudio-descrição e Velocidade -->
+            <div class="p-3 bg-purple-50 rounded-2xl border border-purple-200 space-y-2">
+                <label class="flex items-center justify-between cursor-pointer">
+                    <span class="flex items-center gap-2 font-black text-purple-900">
+                        <i class="fa-solid fa-volume-high text-purple-600 text-base"></i> Leitura em Voz Alta (Áudio)
+                    </span>
+                    <input type="checkbox" id="chk-audio" checked onchange="AccessibilityModule.updateSettings()" class="w-5 h-5 accent-purple-600">
+                </label>
+                <div class="flex items-center justify-between pt-1 border-t border-purple-200">
+                    <span class="text-gray-600 font-bold text-xs">Velocidade da Voz:</span>
+                    <div class="flex gap-1">
+                        <button onclick="AccessibilityModule.setVoiceSpeed(0.75)" id="speed-slow" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-white text-gray-700 border">Lenta (Para Aprender)</button>
+                        <button onclick="AccessibilityModule.setVoiceSpeed(0.95)" id="speed-normal" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-600 text-white shadow">Normal</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Tamanho de Letra e Tipo de Letra -->
+            <div class="p-3 bg-blue-50 rounded-2xl border border-blue-200 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="flex items-center gap-2 font-black text-blue-900">
+                        <i class="fa-solid fa-font text-brand-blue text-base"></i> Tamanho do Texto:
+                    </span>
+                    <div class="flex gap-1">
+                        <button onclick="AccessibilityModule.setTextSize('normal')" id="txt-size-normal" class="px-2 py-1 rounded-lg text-xs font-black bg-brand-blue text-white shadow">A</button>
+                        <button onclick="AccessibilityModule.setTextSize('large')" id="txt-size-large" class="px-2 py-1 rounded-lg text-xs font-black bg-white text-gray-700 border">A+</button>
+                        <button onclick="AccessibilityModule.setTextSize('xlarge')" id="txt-size-xlarge" class="px-2 py-1 rounded-lg text-xs font-black bg-white text-gray-700 border">A++</button>
+                    </div>
+                </div>
+                <label class="flex items-center justify-between cursor-pointer pt-1 border-t border-blue-200">
+                    <span class="text-xs font-bold text-gray-700">Fonte Adaptada de Leitura Fácil</span>
+                    <input type="checkbox" id="chk-font" onchange="AccessibilityModule.toggleDyslexicFont()" class="w-5 h-5 accent-brand-blue">
+                </label>
+            </div>
+
+            <!-- 3. Visão e Estímulos Visuais -->
+            <div class="p-3 bg-amber-50 rounded-2xl border border-amber-200 space-y-2">
+                <label class="flex items-center justify-between cursor-pointer">
+                    <span class="flex items-center gap-2 font-black text-amber-900">
+                        <i class="fa-solid fa-circle-half-stroke text-amber-600 text-base"></i> Alto Contraste (Fundo Preto / Amarelo)
+                    </span>
+                    <input type="checkbox" id="chk-contrast" onchange="AccessibilityModule.toggleContrast()" class="w-5 h-5 accent-amber-600">
+                </label>
+                <label class="flex items-center justify-between cursor-pointer pt-1 border-t border-amber-200">
+                    <span class="flex items-center gap-2 font-black text-amber-900">
+                        <i class="fa-solid fa-feather text-amber-600 text-base"></i> Modo Calmo (Sem Animações e Tons Suaves)
+                    </span>
+                    <input type="checkbox" id="chk-calm" onchange="AccessibilityModule.toggleCalmMode()" class="w-5 h-5 accent-amber-600">
+                </label>
+            </div>
+
+            <!-- 4. Motricidade e Toque -->
+            <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 space-y-2">
+                <label class="flex items-center justify-between cursor-pointer">
+                    <span class="flex items-center gap-2 font-black text-emerald-900">
+                        <i class="fa-solid fa-arrow-pointer text-brand-green text-base"></i> Cursor Gigante & Destaque de Foco
+                    </span>
+                    <input type="checkbox" id="chk-cursor" onchange="AccessibilityModule.toggleBigCursor()" class="w-5 h-5 accent-brand-green">
+                </label>
+                <label class="flex items-center justify-between cursor-pointer pt-1 border-t border-emerald-200">
+                    <span class="flex items-center gap-2 font-black text-emerald-900">
+                        <i class="fa-solid fa-hand text-brand-green text-base"></i> Vibração Tátil ao Tocar (Ecrãs Táteis)
+                    </span>
+                    <input type="checkbox" id="chk-vibrate" checked onchange="AccessibilityModule.updateSettings()" class="w-5 h-5 accent-brand-green">
+                </label>
+            </div>
+
+            <!-- 5. Língua Gestual Portuguesa (LGP) & Apoio Visual -->
+            <div class="p-3 bg-pink-50 rounded-2xl border border-pink-200">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="flex items-center gap-2 font-black text-pink-900">
+                        <i class="fa-solid fa-hands-asl-interpreting text-brand-pink text-base"></i> Sinais em Língua Gestual (LGP)
+                    </span>
+                    <button onclick="AccessibilityModule.openLgpGuide()" class="btn-kid bg-brand-pink text-white px-3 py-1 rounded-xl font-bold text-xs flex items-center gap-1 shadow">
+                        <i class="fa-solid fa-eye"></i> Ver Sinais
+                    </button>
+                </div>
+                <p class="text-[11px] text-gray-600 font-bold leading-tight">Consulta ilustrações táteis dos sinais de saudações e das atividades culturais.</p>
+            </div>
+        </div>
+
+        <div class="mt-4 pt-3 border-t flex gap-2">
+            <button onclick="AccessibilityModule.speakCurrentScreen()" class="flex-1 btn-kid bg-brand-yellow text-gray-900 py-2.5 rounded-2xl font-black text-xs flex items-center justify-center gap-2 shadow">
+                <i class="fa-solid fa-bullhorn text-sm"></i> Ouvir Resumo do Ecrã
+            </button>
+            <button onclick="AccessibilityModule.toggleMenu()" class="btn-kid bg-gray-200 text-gray-700 px-4 py-2.5 rounded-2xl font-black text-xs">
+                Fechar
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL DOS SINAIS DE LGP (LÍNGUA GESTUAL PORTUGUESA) -->
+    <div id="lgp-modal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-5">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-6 border-8 border-brand-purple shadow-2xl relative max-h-[90vh] overflow-y-auto hc-element">
+            <button onclick="AccessibilityModule.closeLgpGuide()" class="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white w-10 h-10 rounded-full font-bold text-xl flex items-center justify-center shadow">
+                &times;
+            </button>
+            <div class="text-center mb-4">
+                <span class="bg-purple-100 text-purple-800 text-xs px-3 py-1 rounded-full font-black uppercase tracking-wider">Acessibilidade Inclusiva</span>
+                <h2 class="text-2xl sm:text-3xl font-black text-brand-purple mt-2 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-hands-asl-interpreting text-brand-pink"></i> Sinais em LGP da Sala
+                </h2>
+                <p class="text-xs sm:text-sm text-gray-600 font-bold mt-1">Sinais em Língua Gestual Portuguesa para conversar e aprender com os colegas!</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="lgp-cards-list"></div>
+
+            <div class="mt-5 text-center">
+                <button onclick="AccessibilityModule.closeLgpGuide()" class="btn-kid bg-brand-purple text-white px-6 py-2.5 rounded-2xl font-black text-sm">
+                    Voltar à Aplicação
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ÁREA PRINCIPAL DA APLICAÇÃO -->
+    <main id="app-content" class="flex-1 p-3 sm:p-5 max-w-7xl mx-auto w-full flex flex-col justify-center items-center">
+        <!-- Injetado dinamicamente -->
+    </main>
+
+    <!-- MODAL DA FICHA DE OBRA (4 Perguntas Culturais Obrigatórias) -->
+    <div id="ficha-obra-modal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-5">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-7 border-8 border-brand-yellow shadow-2xl relative max-h-[92vh] overflow-y-auto hc-element">
+            <button onclick="FichaObraModule.close()" class="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white w-10 h-10 rounded-full font-bold text-xl flex items-center justify-center shadow">
+                &times;
+            </button>
+            <div id="ficha-obra-content"></div>
+        </div>
+    </div>
+
+    <!-- MODAL DE MENSAGENS / TOAST SUAVE (Sem alert) -->
+    <div id="toast-message" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900/90 text-white text-sm font-bold px-6 py-3 rounded-full shadow-2xl z-50 flex items-center gap-2 transition-all">
+        <i class="fa-solid fa-circle-info text-brand-yellow text-lg"></i>
+        <span id="toast-text"></span>
+    </div>
+
+    <script>
+        const CoreApp = {
+            currentLang: 'pt',
+            currentModule: 'home',
+
+            translations: {
+                pt: {
+                    home: "Início",
+                    my_culture_btn: "A Minha Cultura Conta!",
+                    mural_btn: "Mural da Sala",
+                    welcome: "Bem-vindo ao Ateliê do Mundo!",
+                    subtitle: "Escolhe uma atividade para pintar, tocar música, criar e conhecer culturas!",
+                    listen_btn: "Ouvir o que fazer",
+                    ficha_btn: "Ficha da Obra",
+                    save_mural: "Guardar no Mural",
+                    saved_msg: "A tua obra foi guardada no Mural da Sala!",
+                    removed_msg: "Obra removida com sucesso do Mural!",
+                    remove_btn: "Remover",
+                    child_work_badge: "Guardado pela Criança",
+                    example_badge: "Exemplo da Sala",
+                    exit_btn: "Voltar ao Início",
+                    game1_title: "Bordado do Minho",
+                    game1_sub: "Lenço dos Namorados",
+                    game1_inst: "Borda com o teu dedo com linhas coloridas e corações de amor e amizade!",
+                    game2_title: "Fado de Lisboa",
+                    game2_sub: "Guitarra Portuguesa",
+                    game2_inst: "Toca nas cordas da guitarra para criar a tua melodia e grava o som!",
+                    game3_title: "Máscaras de África",
+                    game3_sub: "Jogo de Memória com Máscaras Tradicionais",
+                    game3_inst: "Toca nos cartões para virar e encontrar os pares das grandes máscaras africanas!",
+                    game4_title: "Jogo de Sombras do Japão",
+                    game4_sub: "Origami, Chá e Tradições",
+                    game4_inst: "Toca no objeto colorido e depois descobre a sua sombra exata!",
+                    game5_title: "Casas de Santana",
+                    game5_sub: "Ordenar a Construção da Madeira",
+                    game5_inst: "Ordena os passos certos para construir a casa tradicional de Santana!",
+                    culture_title: "A Minha Cultura Também Conta!",
+                    culture_sub: "Tira ou escolhe uma foto e grava a tua voz para expor no Mural da Sala!",
+                    chain_title: "Desenho Infinito",
+                    chain_sub: "Desenho em Cadeia Coletivo",
+                    chain_inst: "Desenha a tua parte! A partir da 2.ª criança, o friso une-se sozinho!"
+                },
+                en: {
+                    home: "Home",
+                    my_culture_btn: "My Culture Matters!",
+                    mural_btn: "Classroom Mural",
+                    welcome: "Welcome to World Atelier!",
+                    subtitle: "Choose an activity to paint, play music, create and learn about cultures!",
+                    listen_btn: "Listen what to do",
+                    ficha_btn: "Cultural Fact Sheet",
+                    save_mural: "Save to Mural",
+                    saved_msg: "Your creation was saved to the Classroom Mural!",
+                    removed_msg: "Artwork successfully removed from Mural!",
+                    remove_btn: "Remove",
+                    child_work_badge: "Saved by Child",
+                    example_badge: "Classroom Example",
+                    exit_btn: "Back to Home",
+                    game1_title: "Minho Embroidery",
+                    game1_sub: "Sweetheart Handkerchief",
+                    game1_inst: "Embroider with your finger using colorful threads and hearts of love and friendship!",
+                    game2_title: "Lisbon Fado",
+                    game2_sub: "Portuguese Guitar",
+                    game2_inst: "Pluck the guitar strings to compose your melody and record your tune!",
+                    game3_title: "African Masks",
+                    game3_sub: "Memory Game with Traditional Masks",
+                    game3_inst: "Tap the big cards to flip them and match the pairs of African masks!",
+                    game4_title: "Japanese Shadow Matching",
+                    game4_sub: "Origami, Tea and Traditions",
+                    game4_inst: "Tap the colorful object and then find its exact black shadow!",
+                    game5_title: "Santana Houses",
+                    game5_sub: "Order the Madeira House Steps",
+                    game5_inst: "Order the correct steps to build the traditional Santana house in Madeira!",
+                    culture_title: "My Culture Matters Too!",
+                    culture_sub: "Take or choose a photo and record your voice to show on the Classroom Mural!",
+                    chain_title: "Infinite Drawing",
+                    chain_sub: "Collective Chain Drawing",
+                    chain_inst: "Draw your segment! From the 2nd child onwards, the frieze joins together!"
+                },
+                uk: {
+                    home: "Головна",
+                    my_culture_btn: "Моя культура важлива!",
+                    mural_btn: "Стіна класу",
+                    welcome: "Ласкаво просимо до Майстерні Світу!",
+                    subtitle: "Обери гру: малюй, грай музику, створюй та відкривай культури світу!",
+                    listen_btn: "Послухати, що робити",
+                    ficha_btn: "Картка твору",
+                    save_mural: "Зберегти на Стіні",
+                    saved_msg: "Твою роботу збережено на Стіні класу!",
+                    removed_msg: "Роботу успішно видалено зі Стіни!",
+                    remove_btn: "Видалити",
+                    child_work_badge: "Робота дитини",
+                    example_badge: "Приклад класу",
+                    exit_btn: "На головну",
+                    game1_title: "Вишивка Мінью",
+                    game1_sub: "Хустинка закоханих",
+                    game1_inst: "Вишивай пальчиком яскравими нитками візерунки дружби та любові!",
+                    game2_title: "Фаду Лісабона",
+                    game2_sub: "Португальська гітара",
+                    game2_inst: "Торкнися струн гітари, щоб створити власну мелодію та записати її!",
+                    game3_title: "Маски Африки",
+                    game3_sub: "Гра на пам'ять з традиційними масками",
+                    game3_inst: "Торкайся великих карток, щоб перевертати їх і знаходити пари африканських масок!",
+                    game4_title: "Японські Тіні",
+                    game4_sub: "Орігамі, чай і традиції",
+                    game4_inst: "Торкнися кольорового предмета, а потім знайди його точну тінь!",
+                    game5_title: "Будиночки Сантани",
+                    game5_sub: "Порядок будівництва на Мадейрі",
+                    game5_inst: "Розстав правильні кроки, щоб збудувати традиційний будиночок Сантани!",
+                    culture_title: "Моя культура також важлива!",
+                    culture_sub: "Зроби фото та запиши свій голос разом із батьками для виставки на стіні класу!",
+                    chain_title: "Нескінченний Малюнок",
+                    chain_sub: "Колективний ланцюжковий малюнок",
+                    chain_inst: "Намалюй свою частину! Починаючи з 2-ї дитини малюнки поєднуються!"
+                }
+            },
+
+            t(key) {
+                const lang = this.currentLang;
+                return (this.translations[lang] && this.translations[lang][key]) || this.translations['pt'][key] || key;
+            },
+
+            init() {
+                this.renderHome();
+                AccessibilityModule.speak(this.t('welcome') + ". " + this.t('subtitle'));
+            },
+
+            setLanguage(lang) {
+                this.currentLang = lang;
+                ['pt', 'en', 'uk'].forEach(l => {
+                    const btn = document.getElementById(`lang-${l}`);
+                    if (btn) {
+                        if (l === lang) {
+                            btn.className = "px-3 py-1 rounded-full text-xs font-black bg-brand-blue text-white shadow";
+                        } else {
+                            btn.className = "px-3 py-1 rounded-full text-xs font-black text-gray-600 hover:text-black";
+                        }
+                    }
+                });
+
+                document.getElementById('nav-home-text').innerText = this.t('home');
+                document.getElementById('nav-culture-text').innerText = this.t('my_culture_btn');
+                document.getElementById('nav-mural-text').innerText = this.t('mural_btn');
+
+                if (this.currentModule === 'home') {
+                    this.renderHome();
+                } else if (this.currentModule === 'mural') {
+                    MuralModule.render();
+                } else if (this.currentModule === 'culture') {
+                    CultureModeModule.render();
+                }
+
+                AccessibilityModule.showToast(`Idioma alterado: ${lang.toUpperCase()}`);
+                AccessibilityModule.speak(this.t('welcome'));
+            },
+
+            goHome() {
+                this.currentModule = 'home';
+                this.renderHome();
+                AccessibilityModule.speak(this.t('home'));
+            },
+
+            renderHome() {
+                const t = this.translations[this.currentLang];
+                const content = document.getElementById('app-content');
+                content.innerHTML = `
+                    <div class="text-center my-3 animate-fade-in w-full">
+                        <h2 class="text-2xl sm:text-4xl font-extrabold text-brand-purple mb-1 sm:mb-2">${t.welcome}</h2>
+                        <div class="flex items-center justify-center gap-2 max-w-xl mx-auto">
+                            <p class="text-sm sm:text-lg text-gray-700 font-bold">${t.subtitle}</p>
+                            <button onclick="AccessibilityModule.speak('${t.welcome}. ${t.subtitle}')" class="text-brand-pink text-2xl hover:scale-110 transition shrink-0" title="${t.listen_btn}">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- GRELHA DOS 5 JOGOS -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full my-5">
+                        
+                        <!-- JOGO 1: MINHO -->
+                        <div onclick="Game1_Minho.start()" class="btn-kid bg-pink-100 border-4 border-brand-pink rounded-3xl p-5 cursor-pointer hover:scale-[1.02] flex flex-col items-center text-center hc-element relative">
+                            <button onclick="event.stopPropagation(); AccessibilityModule.speak(CoreApp.t('game1_title') + '. ' + CoreApp.t('game1_inst'))" class="absolute top-3 right-3 bg-white text-brand-pink w-10 h-10 rounded-full border-2 border-brand-pink flex items-center justify-center shadow hover:scale-110" title="${t.listen_btn}">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                            <div class="w-20 h-20 bg-brand-pink text-white rounded-2xl flex items-center justify-center text-4xl mb-3 shadow-inner">
+                                <i class="fa-solid fa-heart"></i>
+                            </div>
+                            <span class="text-xs font-black uppercase tracking-widest text-brand-pink">Portugal - Minho</span>
+                            <h3 class="text-2xl font-black text-gray-800">${t.game1_title}</h3>
+                            <p class="text-xs text-gray-600 mt-1 font-bold">${t.game1_sub}</p>
+                            <div class="mt-4 flex flex-wrap justify-center gap-2">
+                                <span class="text-xs bg-white px-3 py-1 rounded-full font-bold border text-pink-700">
+                                    <i class="fa-solid fa-vest"></i> 3 Níveis
+                                </span>
+                                <button onclick="event.stopPropagation(); Game1_Minho.openFicha()" class="bg-brand-purple text-white text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1 shadow hover:scale-105">
+                                    <i class="fa-solid fa-book-open"></i> ${t.ficha_btn}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- JOGO 2: LISBOA -->
+                        <div onclick="Game2_Lisboa.start()" class="btn-kid bg-amber-100 border-4 border-amber-500 rounded-3xl p-5 cursor-pointer hover:scale-[1.02] flex flex-col items-center text-center hc-element relative">
+                            <button onclick="event.stopPropagation(); AccessibilityModule.speak(CoreApp.t('game2_title') + '. ' + CoreApp.t('game2_inst'))" class="absolute top-3 right-3 bg-white text-amber-600 w-10 h-10 rounded-full border-2 border-amber-500 flex items-center justify-center shadow hover:scale-110" title="${t.listen_btn}">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                            <div class="w-20 h-20 bg-amber-500 text-white rounded-2xl flex items-center justify-center text-4xl mb-3 shadow-inner">
+                                <i class="fa-solid fa-music"></i>
+                            </div>
+                            <span class="text-xs font-black uppercase tracking-widest text-amber-600">Portugal - Lisboa</span>
+                            <h3 class="text-2xl font-black text-gray-800">${t.game2_title}</h3>
+                            <p class="text-xs text-gray-600 mt-1 font-bold">${t.game2_sub}</p>
+                            <div class="mt-4 flex flex-wrap justify-center gap-2">
+                                <span class="text-xs bg-white px-3 py-1 rounded-full font-bold border text-amber-700">
+                                    <i class="fa-solid fa-guitar"></i> Cordas & Melodia
+                                </span>
+                                <button onclick="event.stopPropagation(); Game2_Lisboa.openFicha()" class="bg-brand-purple text-white text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1 shadow hover:scale-105">
+                                    <i class="fa-solid fa-book-open"></i> ${t.ficha_btn}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- JOGO 3: ÁFRICA (JOGO DE MEMÓRIA COM 3 NÍVEIS E MÁSCARAS GRANDES) -->
+                        <div onclick="Game3_Africa.start(1)" class="btn-kid bg-emerald-100 border-4 border-emerald-600 rounded-3xl p-5 cursor-pointer hover:scale-[1.02] flex flex-col items-center text-center hc-element relative">
+                            <button onclick="event.stopPropagation(); AccessibilityModule.speak(CoreApp.t('game3_title') + '. ' + CoreApp.t('game3_inst'))" class="absolute top-3 right-3 bg-white text-emerald-700 w-10 h-10 rounded-full border-2 border-emerald-600 flex items-center justify-center shadow hover:scale-110" title="${t.listen_btn}">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                            <div class="w-20 h-20 bg-emerald-600 text-white rounded-2xl flex items-center justify-center text-4xl mb-3 shadow-inner">
+                                <i class="fa-solid fa-mask"></i>
+                            </div>
+                            <span class="text-xs font-black uppercase tracking-widest text-emerald-700">África Diversa</span>
+                            <h3 class="text-2xl font-black text-gray-800">${t.game3_title}</h3>
+                            <p class="text-xs text-gray-600 mt-1 font-bold">${t.game3_sub}</p>
+                            <div class="mt-4 flex flex-wrap justify-center gap-2">
+                                <span class="text-xs bg-white px-3 py-1 rounded-full font-bold border text-emerald-700">
+                                    <i class="fa-solid fa-brain"></i> 3 Níveis • Máscaras Grandes
+                                </span>
+                                <button onclick="event.stopPropagation(); Game3_Africa.openFicha()" class="bg-brand-purple text-white text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1 shadow hover:scale-105">
+                                    <i class="fa-solid fa-book-open"></i> ${t.ficha_btn}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- JOGO 4: JAPÃO -->
+                        <div onclick="Game4_Japan.start()" class="btn-kid bg-red-100 border-4 border-red-500 rounded-3xl p-5 cursor-pointer hover:scale-[1.02] flex flex-col items-center text-center hc-element relative">
+                            <button onclick="event.stopPropagation(); AccessibilityModule.speak(CoreApp.t('game4_title') + '. ' + CoreApp.t('game4_inst'))" class="absolute top-3 right-3 bg-white text-red-600 w-10 h-10 rounded-full border-2 border-red-500 flex items-center justify-center shadow hover:scale-110" title="${t.listen_btn}">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                            <div class="w-20 h-20 bg-red-500 text-white rounded-2xl flex items-center justify-center text-4xl mb-3 shadow-inner">
+                                <i class="fa-solid fa-shapes"></i>
+                            </div>
+                            <span class="text-xs font-black uppercase tracking-widest text-red-600">Japão</span>
+                            <h3 class="text-2xl font-black text-gray-800">${t.game4_title}</h3>
+                            <p class="text-xs text-gray-600 mt-1 font-bold">${t.game4_sub}</p>
+                            <div class="mt-4 flex flex-wrap justify-center gap-2">
+                                <span class="text-xs bg-white px-3 py-1 rounded-full font-bold border text-red-700">
+                                    <i class="fa-solid fa-clone"></i> 3 Níveis • Sombras
+                                </span>
+                                <button onclick="event.stopPropagation(); Game4_Japan.openFicha()" class="bg-brand-purple text-white text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1 shadow hover:scale-105">
+                                    <i class="fa-solid fa-book-open"></i> ${t.ficha_btn}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- JOGO 5: MADEIRA (CASAS DE SANTANA) -->
+                        <div onclick="Game5_Madeira.start()" class="btn-kid bg-sky-100 border-4 border-sky-500 rounded-3xl p-5 cursor-pointer hover:scale-[1.02] flex flex-col items-center text-center hc-element relative">
+                            <button onclick="event.stopPropagation(); AccessibilityModule.speak(CoreApp.t('game5_title') + '. ' + CoreApp.t('game5_inst'))" class="absolute top-3 right-3 bg-white text-sky-600 w-10 h-10 rounded-full border-2 border-sky-500 flex items-center justify-center shadow hover:scale-110" title="${t.listen_btn}">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                            <div class="w-20 h-20 bg-sky-500 text-white rounded-2xl flex items-center justify-center text-4xl mb-3 shadow-inner">
+                                <i class="fa-solid fa-house-chimney"></i>
+                            </div>
+                            <span class="text-xs font-black uppercase tracking-widest text-sky-600">Portugal - Madeira</span>
+                            <h3 class="text-2xl font-black text-gray-800">${t.game5_title}</h3>
+                            <p class="text-xs text-gray-600 mt-1 font-bold">${t.game5_sub}</p>
+                            <div class="mt-4 flex flex-wrap justify-center gap-2">
+                                <span class="text-xs bg-white px-3 py-1 rounded-full font-bold border text-sky-700">
+                                    <i class="fa-solid fa-layer-group"></i> 3 Níveis • Sequência
+                                </span>
+                                <button onclick="event.stopPropagation(); Game5_Madeira.openFicha()" class="bg-brand-purple text-white text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1 shadow hover:scale-105">
+                                    <i class="fa-solid fa-book-open"></i> ${t.ficha_btn}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- ATIVIDADE 6: DESENHO INFINITO (DESENHO EM CADEIA) -->
+                        <div onclick="ChainDrawingModule.start()" class="btn-kid bg-teal-100 border-4 border-teal-600 rounded-3xl p-5 cursor-pointer hover:scale-[1.02] flex flex-col items-center text-center hc-element relative">
+                            <button onclick="event.stopPropagation(); AccessibilityModule.speak(CoreApp.t('chain_title') + '. ' + CoreApp.t('chain_inst'))" class="absolute top-3 right-3 bg-white text-teal-700 w-10 h-10 rounded-full border-2 border-teal-600 flex items-center justify-center shadow hover:scale-110" title="${t.listen_btn}">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                            <div class="w-20 h-20 bg-teal-600 text-white rounded-2xl flex items-center justify-center text-4xl mb-3 shadow-inner">
+                                <i class="fa-solid fa-infinity"></i>
+                            </div>
+                            <span class="text-xs font-black uppercase tracking-widest text-teal-700">Arte Coletiva da Sala</span>
+                            <h3 class="text-2xl font-black text-gray-800">${t.chain_title}</h3>
+                            <p class="text-xs text-gray-600 mt-1 font-bold">${t.chain_sub}</p>
+                            <div class="mt-4 flex flex-wrap justify-center gap-2">
+                                <span class="text-xs bg-white px-3 py-1 rounded-full font-bold border text-teal-800">
+                                    <i class="fa-solid fa-people-group"></i> 2 a 25 Crianças • Friso Contínuo
+                                </span>
+                                <button onclick="event.stopPropagation(); ChainDrawingModule.openFicha()" class="bg-brand-purple text-white text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1 shadow hover:scale-105">
+                                    <i class="fa-solid fa-book-open"></i> ${t.ficha_btn}
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                `;
+            },
+
+            openMural() {
+                this.currentModule = 'mural';
+                MuralModule.render();
+            },
+
+            openCultureMode() {
+                this.currentModule = 'culture';
+                CultureModeModule.render();
+            }
+        };
+
+        const AccessibilityModule = {
+            audioEnabled: true,
+            vibrateEnabled: true,
+            voiceRate: 0.95,
+
+            lgpSigns: [
+                {
+                    title: "Olá / Bem-vindo",
+                    desc: "Mão aberta junto ao rosto a acenar com um sorriso carinhoso.",
+                    icon: "fa-hand",
+                    culturalHint: "Para receber amigos de todas as culturas com alegria."
+                },
+                {
+                    title: "Amor & Amizade",
+                    desc: "Mãos cruzadas sobre o coração transmitindo carinho e união.",
+                    icon: "fa-heart",
+                    culturalHint: "Símbolo dos Lenços de Namorados do Minho."
+                },
+                {
+                    title: "Música / Fado",
+                    desc: "Dedos a dedilhar suavemente como as cordas da Guitarra Portuguesa.",
+                    icon: "fa-guitar",
+                    culturalHint: "Património imaterial de Lisboa partilhado com o mundo."
+                },
+                {
+                    title: "Máscara Tradicional",
+                    desc: "Mãos abertas diante do rosto que se afastam revelando expressões.",
+                    icon: "fa-mask",
+                    culturalHint: "Inspirado nas grandes celebrações e máscaras de África."
+                },
+                {
+                    title: "Casa de Santana",
+                    desc: "Pontas dos dedos unidas no topo a desenhar o teto triangular.",
+                    icon: "fa-house-chimney",
+                    culturalHint: "Tradição viva da Ilha da Madeira e do acolhimento."
+                },
+                {
+                    title: "Obrigado / Partilhar",
+                    desc: "Pontas dos dedos tocam nos lábios e abrem-se para a frente.",
+                    icon: "fa-hands-holding-child",
+                    culturalHint: "Para agradecer a quem nos ensina as suas tradições."
+                }
+            ],
+
+            toggleMenu() {
+                const el = document.getElementById('accessibility-menu');
+                el.classList.toggle('hidden');
+                if (!el.classList.contains('hidden')) {
+                    this.speak("Central de Acessibilidade aberta.");
+                }
+            },
+
+            updateSettings() {
+                const audioChk = document.getElementById('chk-audio');
+                const vibeChk = document.getElementById('chk-vibrate');
+                if (audioChk) this.audioEnabled = audioChk.checked;
+                if (vibeChk) this.vibrateEnabled = vibeChk.checked;
+            },
+
+            setVoiceSpeed(rate) {
+                this.voiceRate = rate;
+                const slowBtn = document.getElementById('speed-slow');
+                const normBtn = document.getElementById('speed-normal');
+                if (rate < 0.9) {
+                    slowBtn.className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-600 text-white shadow";
+                    normBtn.className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-white text-gray-700 border";
+                    this.showToast("Voz lenta ativada para melhor compreensão.");
+                    this.speak("Voz lenta ativada.");
+                } else {
+                    slowBtn.className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-white text-gray-700 border";
+                    normBtn.className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-600 text-white shadow";
+                    this.showToast("Voz normal ativada.");
+                    this.speak("Voz normal ativada.");
+                }
+            },
+
+            setTextSize(size) {
+                document.body.classList.remove('text-large', 'text-xlarge');
+                ['normal', 'large', 'xlarge'].forEach(s => {
+                    const btn = document.getElementById(`txt-size-${s}`);
+                    if (btn) {
+                        if (s === size) {
+                            btn.className = "px-2 py-1 rounded-lg text-xs font-black bg-brand-blue text-white shadow";
+                        } else {
+                            btn.className = "px-2 py-1 rounded-lg text-xs font-black bg-white text-gray-700 border";
+                        }
+                    }
+                });
+
+                if (size === 'large') document.body.classList.add('text-large');
+                if (size === 'xlarge') document.body.classList.add('text-xlarge');
+                this.showToast(`Tamanho do texto: ${size.toUpperCase()}`);
+            },
+
+            toggleDyslexicFont() {
+                const chk = document.getElementById('chk-font');
+                if (chk && chk.checked) {
+                    document.body.classList.add('font-dyslexic');
+                    this.showToast("Fonte adaptada para leitura fácil ativada.");
+                } else {
+                    document.body.classList.remove('font-dyslexic');
+                }
+            },
+
+            toggleContrast() {
+                document.body.classList.toggle('high-contrast');
+                const isHc = document.body.classList.contains('high-contrast');
+                this.showToast(isHc ? "Alto Contraste ativado" : "Alto Contraste desativado");
+            },
+
+            toggleCalmMode() {
+                document.body.classList.toggle('calm-mode');
+                const isCalm = document.body.classList.contains('calm-mode');
+                this.showToast(isCalm ? "Modo Calmo ativado" : "Modo Calmo desativado");
+            },
+
+            toggleBigCursor() {
+                const chk = document.getElementById('chk-cursor');
+                if (chk && chk.checked) {
+                    document.body.classList.add('big-cursor', 'focus-highlight');
+                    this.showToast("Cursor e foco ampliados ativados.");
+                } else {
+                    document.body.classList.remove('big-cursor', 'focus-highlight');
+                }
+            },
+
+            openLgpGuide() {
+                const modal = document.getElementById('lgp-modal');
+                const list = document.getElementById('lgp-cards-list');
+                if (!modal || !list) return;
+
+                list.innerHTML = this.lgpSigns.map(sign => `
+                    <div class="bg-purple-50 border-2 border-purple-200 rounded-2xl p-3 sm:p-4 flex items-start gap-3">
+                        <div class="w-12 h-12 bg-brand-purple text-white rounded-2xl flex items-center justify-center text-xl shrink-0 shadow">
+                            <i class="fa-solid ${sign.icon}"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-black text-purple-900 text-sm sm:text-base">${sign.title}</h4>
+                                <button onclick="AccessibilityModule.speak('${sign.title}. ${sign.desc}')" class="text-brand-pink text-lg hover:scale-110">
+                                    <i class="fa-solid fa-volume-high"></i>
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-700 font-bold mt-1">${sign.desc}</p>
+                            <span class="inline-block mt-1 text-[10px] font-black text-brand-pink bg-pink-100 px-2 py-0.5 rounded-full">
+                                ${sign.culturalHint}
+                            </span>
+                        </div>
+                    </div>
+                `).join('');
+
+                modal.classList.remove('hidden');
+                this.speak("Guia de Sinais em Língua Gestual Portuguesa.");
+            },
+
+            closeLgpGuide() {
+                const modal = document.getElementById('lgp-modal');
+                if (modal) modal.classList.add('hidden');
+            },
+
+            speakCurrentScreen() {
+                const mod = CoreApp.currentModule;
+                let textToRead = "";
+
+                if (mod === 'home') {
+                    textToRead = `${CoreApp.t('welcome')}. ${CoreApp.t('subtitle')}. Temos 5 jogos culturais: Bordado do Minho, Fado de Lisboa, Máscaras de África, Sombras do Japão e Casas de Santana.`;
+                } else if (mod === 'mural') {
+                    textToRead = `${CoreApp.t('mural_btn')}. Podes ver e ouvir todas as obras e criações guardadas pelas crianças e famílias da sala.`;
+                } else if (mod === 'culture') {
+                    textToRead = `${CoreApp.t('culture_title')}. Tira uma fotografia ou grava a tua voz para expor no Mural da Sala.`;
+                } else {
+                    textToRead = "Estás numa atividade cultural. Explora os botões táteis ou clica em ouvir para saberes o que fazer.";
+                }
+
+                this.speak(textToRead);
+            },
+
+            showToast(msg) {
+                const toast = document.getElementById('toast-message');
+                const text = document.getElementById('toast-text');
+                if (!toast || !text) return;
+                text.innerText = msg;
+                toast.classList.remove('hidden');
+                setTimeout(() => {
+                    toast.classList.add('hidden');
+                }, 2800);
+            },
+
+            speak(text) {
+                if (!this.audioEnabled || !text) return;
+                try {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    const langMap = { pt: 'pt-PT', en: 'en-US', uk: 'uk-UA' };
+                    const chosenLang = langMap[CoreApp.currentLang] || 'pt-PT';
+                    utterance.lang = chosenLang;
+                    utterance.rate = this.voiceRate || 0.95;
+                    utterance.pitch = 1.05;
+
+                    // Procura voz no sistema
+                    const voices = window.speechSynthesis.getVoices();
+                    const matchedVoice = voices.find(v => v.lang.startsWith(chosenLang.slice(0, 2)));
+                    if (matchedVoice) utterance.voice = matchedVoice;
+
+                    window.speechSynthesis.speak(utterance);
+                } catch(e) {
+                    console.warn("SpeechSynthesis:", e);
+                }
+            },
+
+            vibrate(pattern = [40]) {
+                if (!this.vibrateEnabled) return;
+                if (navigator.vibrate) {
+                    navigator.vibrate(pattern);
+                }
+            },
+
+            playChime(type = 'success') {
+                try {
+                    const synth = new Tone.Synth().toDestination();
+                    const now = Tone.now();
+                    if (type === 'success') {
+                        synth.triggerAttackRelease("C5", "8n", now);
+                        synth.triggerAttackRelease("G5", "8n", now + 0.12);
+                    } else if (type === 'fanfare') {
+                        synth.triggerAttackRelease("C5", "16n", now);
+                        synth.triggerAttackRelease("E5", "16n", now + 0.1);
+                        synth.triggerAttackRelease("G5", "16n", now + 0.2);
+                        synth.triggerAttackRelease("C6", "4n", now + 0.3);
+                    } else {
+                        synth.triggerAttackRelease("A3", "8n", now);
+                    }
+                } catch(e) {}
+            }
+        };
+
+        const MuralState = {
+            works: [
+                {
+                    id: 'sample-minho-1',
+                    title: 'Lenço de Afeto do Minho',
+                    author: 'Maria (4 anos) & Vovó Rosa',
+                    region: 'Portugal (Minho)',
+                    date: '2026-09-20',
+                    isChildWork: false,
+                    image: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="%23fff"/><path d="M100 40 Q130 10 160 40 T100 120 Q70 10 100 40 Z" fill="%23EF476F"/><text x="100" y="160" font-size="14" font-weight="bold" text-anchor="middle" fill="%23118AB2">Amor e Amizade</text></svg>',
+                    fiche: {
+                        who: "Bordadeiras do Minho e as crianças na sala de aula.",
+                        why: "Para oferecer a quem se gosta muito, transmitir carinho e preservar a tradição minhota.",
+                        materials: "Pano de linho branco, agulha e linhas de algodão ou seda muito coloridas.",
+                        meaning: "Os corações, flores e pássaros bordados simbolizam o amor, a amizade e a alegria."
+                    }
+                },
+                {
+                    id: 'sample-africa-1',
+                    title: 'Grande Máscara Tradicional Gélédé',
+                    author: 'Kofi (5 anos) e Turma dos Pequenos',
+                    region: 'África (Iorubá / Benim e Nigéria)',
+                    date: '2026-09-25',
+                    isChildWork: false,
+                    image: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23ecfdf5"/><ellipse cx="50" cy="55" rx="32" ry="38" fill="%23D97706" stroke="%232B2D42" stroke-width="2.5"/><ellipse cx="38" cy="46" rx="6" ry="3" fill="%232B2D42"/><ellipse cx="62" cy="46" rx="6" ry="3" fill="%232B2D42"/><ellipse cx="50" cy="62" rx="4" ry="2" fill="%232B2D42"/><path d="M38 72 Q50 78 62 72" stroke="%232B2D42" stroke-width="3" fill="none"/><circle cx="50" cy="18" r="10" fill="%23EF476F"/></svg>',
+                    fiche: {
+                        who: "Mestres escultores do povo Iorubá em África.",
+                        why: "Para homenagear as mães e as forças da natureza em danças e festas alegres.",
+                        materials: "Madeira nobre esculpida à mão com cinzel e pigmentos minerais naturais.",
+                        meaning: "Equilíbrio social, sabedoria maternal e respeito comunitário."
+                    }
+                }
+            ],
+
+            addWork(work) {
+                const item = {
+                    ...work,
+                    isChildWork: true,
+                    savedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                };
+                this.works.unshift(item);
+            },
+
+            removeWork(id) {
+                this.works = this.works.filter(w => w.id !== id);
+            }
+        };
+
+        const FichaObraModule = {
+            open(fiche, title, image) {
+                const modal = document.getElementById('ficha-obra-modal');
+                const content = document.getElementById('ficha-obra-content');
+                if (!modal || !content) return;
+
+                content.innerHTML = `
+                    <div class="text-center mb-5">
+                        <span class="bg-brand-yellow text-gray-900 text-xs px-3 py-1 rounded-full font-black uppercase tracking-wider">${CoreApp.t('ficha_btn')}</span>
+                        <h2 class="text-2xl sm:text-3xl font-black text-brand-purple mt-2">${title}</h2>
+                        ${image ? `<img src="${image}" class="w-32 h-32 object-contain mx-auto my-3 rounded-2xl border-4 border-brand-yellow bg-gray-50 p-2 shadow-sm">` : ''}
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-left">
+                        <div class="bg-pink-50 p-3 sm:p-4 rounded-2xl border-2 border-pink-200">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-black text-brand-pink text-sm sm:text-base flex items-center gap-1.5">
+                                    <i class="fa-solid fa-user-gear"></i> 1. Quem fez?
+                                </h4>
+                                <button onclick="AccessibilityModule.speak('Quem fez? ${fiche.who}')" class="text-brand-pink text-lg hover:scale-110">
+                                    <i class="fa-solid fa-volume-high"></i>
+                                </button>
+                            </div>
+                            <p class="text-xs sm:text-sm text-gray-700 mt-1 font-bold">${fiche.who}</p>
+                        </div>
+
+                        <div class="bg-amber-50 p-3 sm:p-4 rounded-2xl border-2 border-amber-200">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-black text-amber-600 text-sm sm:text-base flex items-center gap-1.5">
+                                    <i class="fa-solid fa-bullseye"></i> 2. Para quê?
+                                </h4>
+                                <button onclick="AccessibilityModule.speak('Para quê? ${fiche.why}')" class="text-amber-600 text-lg hover:scale-110">
+                                    <i class="fa-solid fa-volume-high"></i>
+                                </button>
+                            </div>
+                            <p class="text-xs sm:text-sm text-gray-700 mt-1 font-bold">${fiche.why}</p>
+                        </div>
+
+                        <div class="bg-emerald-50 p-3 sm:p-4 rounded-2xl border-2 border-emerald-200">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-black text-emerald-700 text-sm sm:text-base flex items-center gap-1.5">
+                                    <i class="fa-solid fa-boxes-packing"></i> 3. Com que materiais?
+                                </h4>
+                                <button onclick="AccessibilityModule.speak('Com que materiais? ${fiche.materials}')" class="text-emerald-700 text-lg hover:scale-110">
+                                    <i class="fa-solid fa-volume-high"></i>
+                                </button>
+                            </div>
+                            <p class="text-xs sm:text-sm text-gray-700 mt-1 font-bold">${fiche.materials}</p>
+                        </div>
+
+                        <div class="bg-purple-50 p-3 sm:p-4 rounded-2xl border-2 border-purple-200">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-black text-purple-700 text-sm sm:text-base flex items-center gap-1.5">
+                                    <i class="fa-solid fa-heart-pulse"></i> 4. O que significa?
+                                </h4>
+                                <button onclick="AccessibilityModule.speak('O que significa? ${fiche.meaning}')" class="text-purple-700 text-lg hover:scale-110">
+                                    <i class="fa-solid fa-volume-high"></i>
+                                </button>
+                            </div>
+                            <p class="text-xs sm:text-sm text-gray-700 mt-1 font-bold">${fiche.meaning}</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 text-center">
+                        <button onclick="FichaObraModule.close()" class="btn-kid bg-brand-blue text-white px-6 py-2.5 rounded-2xl font-black text-sm">
+                            Fechar
+                        </button>
+                    </div>
+                `;
+
+                modal.classList.remove('hidden');
+                AccessibilityModule.speak(`${title}. ${fiche.who}. ${fiche.meaning}`);
+            },
+
+            close() {
+                const modal = document.getElementById('ficha-obra-modal');
+                if (modal) modal.classList.add('hidden');
+            }
+        };
+
+        // ==========================================
+        // ATIVIDADE 6: DESENHO INFINITO (DESENHO EM CADEIA - 2 A 25 CRIANÇAS)
+        // ==========================================
+        const ChainDrawingModule = {
+            maxChildren: 25,
+            segments: [], // buffer de até 25 turnos { id, childNumber, author, dataUrl }
+            currentAuthor: '',
+            currentColor: '#EF476F',
+            brushSize: 6,
+            isDrawing: false,
+            lastX: 0,
+            lastY: 0,
+            canvas: null,
+            ctx: null,
+
+            // Controlos do Visualizador do Friso Coletivo
+            zoomLevel: 1.0,
+            isAutoScrolling: false,
+            autoScrollAnimationId: null,
+
+            colors: [
+                { hex: '#EF476F', name: 'Rosa Vivo' },
+                { hex: '#118AB2', name: 'Azul Mar' },
+                { hex: '#06D6A0', name: 'Verde Floresta' },
+                { hex: '#FFD166', name: 'Amarelo Sol' },
+                { hex: '#7209B7', name: 'Roxo Criativo' },
+                { hex: '#F77F00', name: 'Laranja Terra' },
+                { hex: '#2B2D42', name: 'Preto Contorno' }
+            ],
+
+            start() {
+                const content = document.getElementById('app-content');
+                const t = CoreApp.translations[CoreApp.currentLang];
+                const currentNum = this.segments.length + 1;
+
+                if (currentNum > this.maxChildren) {
+                    this.openFriezeViewer();
+                    AccessibilityModule.showToast("Friso Coletivo Completo! Atingiram o limite de 25 crianças.");
+                    return;
+                }
+
+                content.innerHTML = `
+                    <div class="w-full max-w-4xl mx-auto my-2 animate-fade-in">
+                        <!-- Topo da Atividade -->
+                        <div class="flex flex-wrap justify-between items-center bg-teal-50 p-4 rounded-3xl border-4 border-teal-600 mb-4 gap-3 hc-element">
+                            <div class="flex items-center gap-3">
+                                <button onclick="CoreApp.goHome()" class="btn-kid bg-gray-200 text-gray-800 px-3 py-2 rounded-xl text-sm font-black">
+                                    <i class="fa-solid fa-arrow-left"></i> ${t.exit_btn}
+                                </button>
+                                <div>
+                                    <h2 class="text-xl sm:text-2xl font-black text-teal-900 flex items-center gap-2">
+                                        <i class="fa-solid fa-infinity text-teal-600"></i> ${t.chain_title}
+                                    </h2>
+                                    <p class="text-xs text-gray-700 font-bold">Vez da Criança <span class="text-teal-700 font-black text-sm">${currentNum}</span> de ${this.maxChildren} • ${this.segments.length} já desenharam</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                ${this.segments.length >= 1 ? `
+                                    <button onclick="ChainDrawingModule.openFriezeViewer()" class="btn-kid bg-teal-600 text-white px-3.5 py-2 rounded-2xl font-black text-xs flex items-center gap-1.5 shadow animate-pulse-gentle">
+                                        <i class="fa-solid fa-film"></i> Ver Friso Coletivo (${this.segments.length})
+                                    </button>
+                                ` : ''}
+                                <button onclick="ChainDrawingModule.openFicha()" class="btn-kid bg-brand-purple text-white px-3 py-2 rounded-2xl font-black text-xs flex items-center gap-1">
+                                    <i class="fa-solid fa-book-open"></i> ${t.ficha_btn}
+                                </button>
+                                <button onclick="AccessibilityModule.speak('${t.chain_inst}')" class="btn-kid bg-amber-500 text-white px-3 py-2 rounded-2xl font-black text-xs flex items-center gap-1">
+                                    <i class="fa-solid fa-volume-high"></i> ${t.listen_btn}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Barra de Dica e Guia de Conexão -->
+                        <div class="bg-amber-100 border-2 border-amber-300 p-3 rounded-2xl mb-4 flex items-center justify-between text-xs sm:text-sm hc-element">
+                            <div class="flex items-center gap-2 font-bold text-amber-900">
+                                <i class="fa-solid fa-wand-magic-sparkles text-amber-600 text-lg"></i>
+                                <span>${currentNum === 1 ? 'Primeira criança: faz o teu desenho! Deixa algumas linhas tocarem na borda direita para a próxima criança continuar!' : 'Continua o desenho que vem da borda esquerda! Ao clicares em "Já está! 👍", o friso une-se automaticamente!'}</span>
+                            </div>
+                            <span class="bg-white text-teal-800 font-black text-[11px] px-2.5 py-1 rounded-full border border-amber-200">
+                                Segmento ${currentNum}/${this.maxChildren}
+                            </span>
+                        </div>
+
+                        <!-- Prancheta com Paleta e Canvas -->
+                        <div class="bg-white p-4 rounded-3xl border-4 border-teal-600 shadow-xl flex flex-col md:flex-row gap-4 items-center justify-center hc-element">
+                            <!-- Ferramentas e Cores -->
+                            <div class="flex md:flex-col gap-3 justify-center items-center bg-teal-50 p-3 rounded-2xl border-2 border-teal-200 w-full md:w-auto">
+                                <span class="text-[11px] font-black text-teal-800 uppercase tracking-wide hidden md:block">Cores</span>
+                                <div class="flex md:flex-col gap-2 flex-wrap justify-center">
+                                    ${this.colors.map(c => `
+                                        <button onclick="ChainDrawingModule.setColor('${c.hex}')"
+                                                id="chain-color-${c.hex.replace('#','')}"
+                                                style="background-color: ${c.hex}"
+                                                class="w-10 h-10 rounded-full border-4 ${this.currentColor === c.hex ? 'border-gray-900 scale-110 shadow' : 'border-white'} transition"
+                                                title="${c.name}">
+                                        </button>
+                                    `).join('')}
+                                </div>
+
+                                <div class="h-px bg-teal-200 w-full hidden md:block my-1"></div>
+
+                                <span class="text-[11px] font-black text-teal-800 uppercase tracking-wide hidden md:block">Traço</span>
+                                <div class="flex md:flex-col gap-2 items-center">
+                                    <button onclick="ChainDrawingModule.setBrushSize(4)" class="w-8 h-8 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center text-xs font-black ${this.brushSize === 4 ? 'ring-2 ring-teal-600' : ''}">F</button>
+                                    <button onclick="ChainDrawingModule.setBrushSize(8)" class="w-8 h-8 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center text-xs font-black ${this.brushSize === 8 ? 'ring-2 ring-teal-600' : ''}">M</button>
+                                    <button onclick="ChainDrawingModule.setBrushSize(14)" class="w-8 h-8 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center text-xs font-black ${this.brushSize === 14 ? 'ring-2 ring-teal-600' : ''}">G</button>
+                                </div>
+                            </div>
+
+                            <!-- Canvas de Desenho Individual do Segmento -->
+                            <div class="relative w-full max-w-[480px] aspect-[4/3] bg-white rounded-2xl overflow-hidden shadow-inner border-4 border-dashed border-teal-300">
+                                <canvas id="chain-canvas" class="w-full h-full touch-none cursor-crosshair"></canvas>
+                                <!-- Pista de Conexão na Margem Esquerda -->
+                                ${this.segments.length > 0 ? `
+                                    <div class="absolute top-0 left-0 bottom-0 w-8 pointer-events-none bg-gradient-to-r from-teal-500/20 to-transparent border-r-2 border-dashed border-teal-400 flex items-center justify-center">
+                                        <span class="text-[9px] font-black text-teal-700 -rotate-90 whitespace-nowrap uppercase">Ligação</span>
+                                    </div>
+                                ` : ''}
+                                <!-- Pista de Continuação na Margem Direita -->
+                                <div class="absolute top-0 right-0 bottom-0 w-8 pointer-events-none bg-gradient-to-l from-amber-400/20 to-transparent border-l-2 border-dashed border-amber-400 flex items-center justify-center">
+                                    <span class="text-[9px] font-black text-amber-700 rotate-90 whitespace-nowrap uppercase">Continua</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Identificação da Criança e Botão Já Está -->
+                        <div class="flex flex-wrap items-center justify-center gap-3 mt-4">
+                            <input type="text" id="chain-author-input" placeholder="Nome da Criança ${currentNum} (ex: Tiago, Sofia...)"
+                                   class="px-4 py-2.5 rounded-2xl border-2 border-teal-400 font-bold text-sm text-center shadow-sm w-full sm:w-72">
+                            <button onclick="ChainDrawingModule.clearCurrentCanvas()" class="btn-kid bg-amber-500 text-white px-4 py-2.5 rounded-2xl font-black text-sm flex items-center gap-1.5 shadow">
+                                <i class="fa-solid fa-rotate-left"></i> Limpar
+                            </button>
+                            <button onclick="ChainDrawingModule.submitSegment()" class="btn-kid bg-brand-green hover:bg-emerald-600 text-white px-7 py-3 rounded-2xl font-black text-base flex items-center gap-2 shadow-lg animate-pulse-gentle">
+                                <i class="fa-solid fa-thumbs-up text-lg"></i> Já está! 👍
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                setTimeout(() => this.initCanvas(), 60);
+                AccessibilityModule.speak(`${t.chain_title}. Vez da criança número ${currentNum}. ${t.chain_inst}`);
+            },
+
+            initCanvas() {
+                this.canvas = document.getElementById('chain-canvas');
+                if (!this.canvas) return;
+
+                const rect = this.canvas.getBoundingClientRect();
+                this.canvas.width = rect.width || 480;
+                this.canvas.height = rect.height || 360;
+                this.ctx = this.canvas.getContext('2d');
+                this.ctx.lineCap = 'round';
+                this.ctx.lineJoin = 'round';
+
+                this.drawInitialGuide();
+
+                // Listeners de Rato
+                this.canvas.addEventListener('mousedown', (e) => this.startDrawing(e));
+                this.canvas.addEventListener('mousemove', (e) => this.draw(e));
+                this.canvas.addEventListener('mouseup', () => this.stopDrawing());
+                this.canvas.addEventListener('mouseleave', () => this.stopDrawing());
+
+                // Listeners de Toque (Ecrãs Táteis / Tablets)
+                this.canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.startDrawing(e.touches[0]);
+                }, { passive: false });
+                this.canvas.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    this.draw(e.touches[0]);
+                }, { passive: false });
+                this.canvas.addEventListener('touchend', () => this.stopDrawing());
+            },
+
+            drawInitialGuide() {
+                if (!this.ctx || !this.canvas) return;
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+
+                this.ctx.fillStyle = '#FFFFFF';
+                this.ctx.fillRect(0, 0, w, h);
+
+                // Linha de horizonte suave para guiar a continuidade
+                this.ctx.save();
+                this.ctx.strokeStyle = 'rgba(6, 214, 160, 0.25)';
+                this.ctx.lineWidth = 2;
+                this.ctx.setLineDash([8, 8]);
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, h * 0.65);
+                this.ctx.lineTo(w, h * 0.65);
+                this.ctx.stroke();
+
+                // Se houver desenho anterior, projeta uma faixa fantasma do bordo direito do desenho anterior na margem esquerda
+                if (this.segments.length > 0) {
+                    const prevSegment = this.segments[this.segments.length - 1];
+                    const img = new Image();
+                    img.onload = () => {
+                        // Desenha os últimos 30 pixels do desenho anterior nos primeiros 30 pixels do novo canvas com opacidade reduzida
+                        this.ctx.save();
+                        this.ctx.globalAlpha = 0.35;
+                        this.ctx.drawImage(img, img.width - 35, 0, 35, img.height, 0, 0, 35, h);
+                        this.ctx.restore();
+                    };
+                    img.src = prevSegment.dataUrl;
+                }
+                this.ctx.restore();
+            },
+
+            getCoordinates(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                return {
+                    x: (e.clientX - rect.left) * (this.canvas.width / rect.width),
+                    y: (e.clientY - rect.top) * (this.canvas.height / rect.height)
+                };
+            },
+
+            startDrawing(e) {
+                this.isDrawing = true;
+                const coords = this.getCoordinates(e);
+                this.lastX = coords.x;
+                this.lastY = coords.y;
+            },
+
+            draw(e) {
+                if (!this.isDrawing || !this.ctx) return;
+                const coords = this.getCoordinates(e);
+
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.lastX, this.lastY);
+                this.ctx.lineTo(coords.x, coords.y);
+                this.ctx.strokeStyle = this.currentColor;
+                this.ctx.lineWidth = this.brushSize;
+                this.ctx.stroke();
+
+                this.lastX = coords.x;
+                this.lastY = coords.y;
+            },
+
+            stopDrawing() {
+                if (this.isDrawing) {
+                    this.isDrawing = false;
+                    AccessibilityModule.vibrate([15]);
+                }
+            },
+
+            setColor(hex) {
+                this.currentColor = hex;
+                document.querySelectorAll('[id^="chain-color-"]').forEach(btn => {
+                    btn.classList.remove('border-gray-900', 'scale-110', 'shadow');
+                    btn.classList.add('border-white');
+                });
+                const active = document.getElementById(`chain-color-${hex.replace('#','')}`);
+                if (active) {
+                    active.classList.remove('border-white');
+                    active.classList.add('border-gray-900', 'scale-110', 'shadow');
+                }
+            },
+
+            setBrushSize(size) {
+                this.brushSize = size;
+            },
+
+            clearCurrentCanvas() {
+                this.drawInitialGuide();
+                AccessibilityModule.showToast("Desenho limpo! Podes desenhar de novo.");
+            },
+
+            submitSegment() {
+                if (!this.canvas) return;
+                const dataUrl = this.canvas.toDataURL('image/png');
+                const authorInput = document.getElementById('chain-author-input');
+                const authorName = (authorInput && authorInput.value.trim()) || `Criança ${this.segments.length + 1}`;
+
+                // Guarda o segmento no buffer
+                this.segments.push({
+                    id: 'seg-' + Date.now(),
+                    childNumber: this.segments.length + 1,
+                    author: authorName,
+                    dataUrl: dataUrl
+                });
+
+                AccessibilityModule.playChime('success');
+                AccessibilityModule.vibrate([40, 60, 40]);
+
+                // CRITÉRIO PEDAGÓGICO E TÉCNICO:
+                // Assim que a 2.ª criança desenha e toca em "Já está! 👍", abre AUTOMATICAMENTE o Friso Infinito Coletivo!
+                if (this.segments.length >= 2) {
+                    try { confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } }); } catch(e){}
+                    AccessibilityModule.showToast(`Fantástico! ${authorName} uniu o seu desenho ao Friso Infinito!`);
+                    AccessibilityModule.speak(`Muito bem! O Friso Coletivo tem agora os desenhos de ${this.segments.length} crianças unidos em tempo real!`);
+                    this.openFriezeViewer();
+                } else {
+                    // Foi a 1.ª criança: convida a 2.ª criança
+                    AccessibilityModule.showToast(`Excelente, ${authorName}! Agora passa a vez à criança seguinte.`);
+                    AccessibilityModule.speak(`Muito bem ${authorName}! O teu desenho foi guardado. Agora é a vez da 2ª criança desenhar para unir o friso!`);
+                    this.start();
+                }
+            },
+
+            openFriezeViewer() {
+                const content = document.getElementById('app-content');
+                const t = CoreApp.translations[CoreApp.currentLang];
+                this.isAutoScrolling = false;
+                if (this.autoScrollAnimationId) cancelAnimationFrame(this.autoScrollAnimationId);
+
+                content.innerHTML = `
+                    <div class="w-full max-w-6xl mx-auto my-2 animate-fade-in">
+                        <!-- Barra de Cabeçalho do Friso Coletivo -->
+                        <div class="flex flex-wrap justify-between items-center bg-teal-50 p-4 rounded-3xl border-4 border-teal-600 mb-4 gap-3 hc-element">
+                            <div>
+                                <span class="bg-teal-600 text-white text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                                    Obra Coletiva em Tempo Real
+                                </span>
+                                <h2 class="text-2xl sm:text-3xl font-black text-teal-900 mt-1 flex items-center gap-2">
+                                    <i class="fa-solid fa-infinity text-teal-600"></i> Friso Infinito da Sala
+                                </h2>
+                                <p class="text-xs text-gray-700 font-bold">União contínua de ${this.segments.length} artistas da turma!</p>
+                            </div>
+
+                            <!-- Botões de Controlo do Visualizador: Zoom e Auto-Scroll -->
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <div class="bg-white p-1 rounded-2xl border-2 border-teal-300 flex items-center gap-1 shadow-sm">
+                                    <button onclick="ChainDrawingModule.adjustZoom(-0.15)" class="w-8 h-8 rounded-xl font-black bg-gray-100 text-gray-800 text-sm hover:bg-gray-200" title="Diminuir Zoom">
+                                        <i class="fa-solid fa-magnifying-glass-minus"></i>
+                                    </button>
+                                    <span id="frieze-zoom-text" class="text-xs font-black px-2 text-teal-900">100%</span>
+                                    <button onclick="ChainDrawingModule.adjustZoom(0.15)" class="w-8 h-8 rounded-xl font-black bg-gray-100 text-gray-800 text-sm hover:bg-gray-200" title="Aumentar Zoom">
+                                        <i class="fa-solid fa-magnifying-glass-plus"></i>
+                                    </button>
+                                </div>
+
+                                <button id="btn-auto-scroll" onclick="ChainDrawingModule.toggleAutoScroll()" class="btn-kid bg-brand-yellow text-gray-900 px-4 py-2 rounded-2xl font-black text-xs flex items-center gap-2 shadow">
+                                    <i class="fa-solid fa-play"></i> Rolar Sozinho
+                                </button>
+
+                                <button onclick="ChainDrawingModule.openFicha()" class="btn-kid bg-brand-purple text-white px-3 py-2 rounded-2xl font-black text-xs flex items-center gap-1">
+                                    <i class="fa-solid fa-book-open"></i> ${t.ficha_btn}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- VISUALIZADOR CONTÍNUO DO FRISO INFINITO (CANVAS OU FAIXA HORIZONTAL DE ALTA EFICIÊNCIA) -->
+                        <div class="bg-white border-8 border-teal-600 rounded-3xl p-3 sm:p-5 shadow-2xl overflow-hidden hc-element">
+                            <div id="frieze-scroll-container" class="overflow-x-auto overflow-y-hidden pb-4 scrollbar-thin scroll-smooth cursor-grab active:cursor-grabbing rounded-2xl bg-gray-50 border-2 border-dashed border-teal-200" style="scrollbar-width: thin;">
+                                <div id="frieze-strip" class="flex flex-nowrap items-stretch gap-0 transition-transform origin-left" style="transform: scale(${this.zoomLevel});">
+                                    ${this.segments.map((seg, idx) => `
+                                        <div class="shrink-0 relative border-r-4 border-dashed border-teal-400 bg-white" style="width: 380px; height: 285px;">
+                                            <img src="${seg.dataUrl}" class="w-full h-full object-fill block" alt="Segmento ${seg.childNumber} por ${seg.author}">
+                                            
+                                            <!-- Botão de Apagar este trabalho individual do Friso -->
+                                            <button onclick="event.stopPropagation(); ChainDrawingModule.deleteSegment('${seg.id}')"
+                                                    title="Apagar este trabalho"
+                                                    class="absolute top-2 left-2 bg-red-500 hover:bg-red-600 active:scale-95 text-white w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shadow-md z-10 transition hover:scale-110">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+
+                                            <div class="absolute bottom-2 left-2 bg-teal-800/85 text-white text-[10px] font-black px-2.5 py-1 rounded-full shadow backdrop-blur-sm">
+                                                Criança ${seg.childNumber}: ${seg.author}
+                                            </div>
+                                            <div class="absolute top-2 right-2 bg-brand-yellow text-gray-900 text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center shadow">
+                                                ${idx + 1}
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+
+                            <!-- Legenda de Autores Participantes -->
+                            <div class="mt-3 flex items-center justify-between text-xs text-gray-600 font-bold flex-wrap gap-2 px-1">
+                                <span><i class="fa-solid fa-users text-teal-600"></i> Autores do Friso: ${this.segments.map(s => s.author).join(', ')}</span>
+                                <span class="text-teal-700 font-black"><i class="fa-solid fa-arrows-left-right"></i> Desliza para explorar a obra horizontalmente</span>
+                            </div>
+                        </div>
+
+                        <!-- BARRA DE AÇÕES: GUARDAR NO MURAL, EXPORTAR PNG E ADICIONAR NOVA CRIANÇA -->
+                        <div class="flex flex-wrap justify-center items-center gap-3 mt-5">
+                            ${this.segments.length < this.maxChildren ? `
+                                <button onclick="ChainDrawingModule.start()" class="btn-kid bg-brand-green text-white px-5 py-3 rounded-2xl font-black text-sm flex items-center gap-2 shadow-lg animate-pulse-gentle">
+                                    <i class="fa-solid fa-plus text-base"></i> Próxima Criança (${this.segments.length + 1}/${this.maxChildren})
+                                </button>
+                            ` : `
+                                <span class="bg-gray-200 text-gray-700 px-4 py-3 rounded-2xl font-black text-xs">Friso Completo (25/25)</span>
+                            `}
+
+                            <button onclick="ChainDrawingModule.saveToMural()" class="btn-kid bg-brand-blue text-white px-5 py-3 rounded-2xl font-black text-sm flex items-center gap-2 shadow-lg">
+                                <i class="fa-solid fa-floppy-disk"></i> Guardar no Mural da Sala
+                            </button>
+
+                            <button onclick="ChainDrawingModule.exportFriezePNG()" class="btn-kid bg-brand-pink text-white px-5 py-3 rounded-2xl font-black text-sm flex items-center gap-2 shadow-lg">
+                                <i class="fa-solid fa-download"></i> Descarregar PNG Gigante
+                            </button>
+
+                            <button onclick="ChainDrawingModule.resetFrieze()" class="btn-kid bg-amber-500 text-white px-4 py-3 rounded-2xl font-black text-sm flex items-center gap-1.5 shadow">
+                                <i class="fa-solid fa-rotate-left"></i> Novo Friso
+                            </button>
+
+                            <button onclick="CoreApp.goHome()" class="btn-kid bg-gray-200 text-gray-800 px-4 py-3 rounded-2xl font-black text-sm">
+                                ${t.exit_btn}
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                AccessibilityModule.speak(`Friso Infinito Coletivo com ${this.segments.length} desenhos unidos. Podes rolar sozinho, ajustar o zoom ou guardar no mural!`);
+            },
+
+            deleteSegment(id) {
+                const deletedSeg = this.segments.find(s => s.id === id);
+                const authorName = deletedSeg ? deletedSeg.author : "Segmento";
+                this.segments = this.segments.filter(s => s.id !== id);
+
+                // Renumera sequencialmente os trabalhos restantes no Friso
+                this.segments.forEach((seg, idx) => {
+                    seg.childNumber = idx + 1;
+                });
+
+                AccessibilityModule.vibrate([40]);
+                AccessibilityModule.playChime('error');
+                AccessibilityModule.showToast(`Trabalho de ${authorName} apagado do Friso!`);
+                AccessibilityModule.speak(`Trabalho apagado com sucesso.`);
+
+                if (this.segments.length === 0) {
+                    this.start();
+                } else {
+                    this.openFriezeViewer();
+                }
+            },
+
+            adjustZoom(delta) {
+                this.zoomLevel = Math.max(0.5, Math.min(2.0, this.zoomLevel + delta));
+                const strip = document.getElementById('frieze-strip');
+                const txt = document.getElementById('frieze-zoom-text');
+                if (strip) strip.style.transform = `scale(${this.zoomLevel})`;
+                if (txt) txt.innerText = Math.round(this.zoomLevel * 100) + '%';
+                AccessibilityModule.vibrate([15]);
+            },
+
+            toggleAutoScroll() {
+                const btn = document.getElementById('btn-auto-scroll');
+                const container = document.getElementById('frieze-scroll-container');
+                if (!container) return;
+
+                this.isAutoScrolling = !this.isAutoScrolling;
+
+                if (this.isAutoScrolling) {
+                    btn.className = "btn-kid bg-red-500 text-white px-4 py-2 rounded-2xl font-black text-xs flex items-center gap-2 shadow";
+                    btn.innerHTML = `<i class="fa-solid fa-pause"></i> Parar Rolagem`;
+
+                    let direction = 1;
+                    const scrollStep = () => {
+                        if (!this.isAutoScrolling) return;
+
+                        container.scrollLeft += 2 * direction;
+                        if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 5) {
+                            direction = -1; // Volta para trás suavemente
+                        } else if (container.scrollLeft <= 5) {
+                            direction = 1; // Rola novamente para a frente
+                        }
+
+                        this.autoScrollAnimationId = requestAnimationFrame(scrollStep);
+                    };
+
+                    this.autoScrollAnimationId = requestAnimationFrame(scrollStep);
+                    AccessibilityModule.showToast("Rolar Sozinho ativado!");
+                } else {
+                    btn.className = "btn-kid bg-brand-yellow text-gray-900 px-4 py-2 rounded-2xl font-black text-xs flex items-center gap-2 shadow";
+                    btn.innerHTML = `<i class="fa-solid fa-play"></i> Rolar Sozinho`;
+                    if (this.autoScrollAnimationId) cancelAnimationFrame(this.autoScrollAnimationId);
+                    AccessibilityModule.showToast("Rolagem parada.");
+                }
+            },
+
+            /* Gera a imagem composta de alta resolução com todos os segmentos unidos sem perda de memória */
+            async generateCompositeCanvas() {
+                const segmentWidth = 480;
+                const segmentHeight = 360;
+                const totalWidth = segmentWidth * this.segments.length;
+
+                const compCanvas = document.createElement('canvas');
+                compCanvas.width = totalWidth;
+                compCanvas.height = segmentHeight;
+                const compCtx = compCanvas.getContext('2d');
+
+                for (let i = 0; i < this.segments.length; i++) {
+                    const seg = this.segments[i];
+                    await new Promise((resolve) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            compCtx.drawImage(img, i * segmentWidth, 0, segmentWidth, segmentHeight);
+                            // Linha de união sutil
+                            if (i > 0) {
+                                compCtx.strokeStyle = 'rgba(6, 214, 160, 0.4)';
+                                compCtx.lineWidth = 2;
+                                compCtx.beginPath();
+                                compCtx.moveTo(i * segmentWidth, 0);
+                                compCtx.lineTo(i * segmentWidth, segmentHeight);
+                                compCtx.stroke();
+                            }
+                            resolve();
+                        };
+                        img.src = seg.dataUrl;
+                    });
+                }
+
+                return compCanvas;
+            },
+
+            async exportFriezePNG() {
+                if (this.segments.length === 0) return;
+                AccessibilityModule.showToast("A compor imagem gigante do Friso...");
+
+                const compositeCanvas = await this.generateCompositeCanvas();
+                const fullDataUrl = compositeCanvas.toDataURL('image/png');
+
+                const link = document.createElement('a');
+                link.download = `Friso_Infinito_Turma_${this.segments.length}_criancas.png`;
+                link.href = fullDataUrl;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                AccessibilityModule.playChime('success');
+                AccessibilityModule.showToast("Friso Infinito descarregado com sucesso!");
+                AccessibilityModule.speak("O Friso Infinito foi descarregado em imagem PNG para o teu computador ou tablet!");
+            },
+
+            async saveToMural() {
+                if (this.segments.length === 0) return;
+                AccessibilityModule.showToast("A guardar no Mural da Sala...");
+
+                const compositeCanvas = await this.generateCompositeCanvas();
+                const fullDataUrl = compositeCanvas.toDataURL('image/png');
+                const authorsList = this.segments.map(s => s.author).join(', ');
+
+                MuralState.addWork({
+                    id: 'frieze-' + Date.now(),
+                    title: `Friso Infinito Coletivo (${this.segments.length} Crianças)`,
+                    author: authorsList,
+                    region: 'Criação Coletiva da Sala',
+                    date: new Date().toISOString().split('T')[0],
+                    image: fullDataUrl,
+                    fiche: {
+                        who: `Criado em conjunto por: ${authorsList}.`,
+                        why: "Para experimentar a arte colaborativa, onde o desenho de cada um se conecta ao do colega em harmonia.",
+                        materials: "Telas digitais contínuas, linhas coloridas e união colaborativa.",
+                        meaning: "Cada criança traz uma cor e um traço único, mas juntas formam uma obra infinita de amizade e partilha."
+                    }
+                });
+
+                AccessibilityModule.playChime('fanfare');
+                try { confetti({ particleCount: 110, spread: 80, origin: { y: 0.6 } }); } catch(e){}
+                AccessibilityModule.showToast("Friso Coletivo guardado no Mural da Sala!");
+                AccessibilityModule.speak("O Friso Coletivo foi guardado no Mural da Sala com muito sucesso!");
+                CoreApp.openMural();
+            },
+
+            resetFrieze() {
+                this.segments = [];
+                this.isAutoScrolling = false;
+                if (this.autoScrollAnimationId) cancelAnimationFrame(this.autoScrollAnimationId);
+                AccessibilityModule.showToast("Novo Friso preparado!");
+                AccessibilityModule.speak("Novo Friso Coletivo iniciado. Vez da primeira criança!");
+                this.start();
+            },
+
+            openFicha() {
+                FichaObraModule.open({
+                    who: "As crianças da sala de aula em desenho colaborativo em cadeia.",
+                    why: "Para criar uma obra de arte panorâmica e contínua, unindo a imaginação de todos os colegas.",
+                    materials: "Pincéis digitais, linhas vivas e faixa panorâmica com conexão de traços.",
+                    meaning: "Cooperação, continuidade e a certeza de que a arte nos une a todos em equipa."
+                }, CoreApp.t('chain_title'), "");
+            }
+        };
+
+        // ==========================================
+        // JOGO 1: BORDADO DO MINHO
+        // ==========================================
+        const Game1_Minho = {
+            currentLevel: 1,
+            currentColor: '#EF476F',
+            brushSize: 6,
+            isDrawing: false,
+            lastX: 0,
+            lastY: 0,
+            canvas: null,
+            ctx: null,
+
+            colors: [
+                { hex: '#EF476F', name: 'Vermelho' },
+                { hex: '#118AB2', name: 'Azul' },
+                { hex: '#FFD166', name: 'Amarelo' },
+                { hex: '#06D6A0', name: 'Verde' },
+                { hex: '#2B2D42', name: 'Preto' },
+                { hex: '#9C27B0', name: 'Roxo' }
+            ],
+
+            start(level = 1) {
+                this.currentLevel = level;
+                const content = document.getElementById('app-content');
+                const t = CoreApp.translations[CoreApp.currentLang];
+
+                content.innerHTML = `
+                    <div class="w-full max-w-3xl mx-auto my-2 animate-fade-in">
+                        <div class="flex flex-wrap justify-between items-center bg-pink-50 p-4 rounded-3xl border-4 border-brand-pink mb-4 gap-3 hc-element">
+                            <div class="flex items-center gap-3">
+                                <button onclick="CoreApp.goHome()" class="btn-kid bg-gray-200 text-gray-800 px-3 py-2 rounded-xl text-sm font-black">
+                                    <i class="fa-solid fa-arrow-left"></i> ${t.exit_btn}
+                                </button>
+                                <div>
+                                    <h2 class="text-xl sm:text-2xl font-black text-brand-pink flex items-center gap-2">
+                                        <i class="fa-solid fa-heart"></i> ${t.game1_title}
+                                    </h2>
+                                    <p class="text-xs text-gray-700 font-bold">${t.game1_sub} • Nível ${level}</p>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-1 bg-white p-1 rounded-2xl border-2 border-pink-200">
+                                <button onclick="Game1_Minho.start(1)" class="px-3 py-1 rounded-xl font-bold text-xs ${level === 1 ? 'bg-brand-pink text-white' : 'text-gray-600'}">Nível 1</button>
+                                <button onclick="Game1_Minho.start(2)" class="px-3 py-1 rounded-xl font-bold text-xs ${level === 2 ? 'bg-brand-pink text-white' : 'text-gray-600'}">Nível 2</button>
+                                <button onclick="Game1_Minho.start(3)" class="px-3 py-1 rounded-xl font-bold text-xs ${level === 3 ? 'bg-brand-pink text-white' : 'text-gray-600'}">Nível 3</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-amber-100 border-2 border-amber-300 p-3 rounded-2xl mb-4 flex items-center justify-between text-sm hc-element">
+                            <div class="flex items-center gap-2 font-bold text-amber-900">
+                                <i class="fa-solid fa-lightbulb text-xl text-amber-500"></i>
+                                <span>${t.game1_inst}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="Game1_Minho.openFicha()" class="btn-kid bg-brand-purple text-white px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1">
+                                    <i class="fa-solid fa-book-open"></i> ${t.ficha_btn}
+                                </button>
+                                <button onclick="AccessibilityModule.speak('${t.game1_inst}')" class="btn-kid bg-amber-500 text-white px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1">
+                                    <i class="fa-solid fa-volume-high"></i> ${t.listen_btn}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Prancheta do Bordado -->
+                        <div class="bg-white p-4 rounded-3xl border-4 border-brand-pink shadow-xl flex flex-col md:flex-row gap-4 items-center justify-center hc-element">
+                            <!-- Paleta de Cores e Traço -->
+                            <div class="flex md:flex-col gap-3 justify-center items-center bg-pink-50 p-3 rounded-2xl border-2 border-pink-200 w-full md:w-auto">
+                                <span class="text-xs font-black text-brand-pink uppercase tracking-wide hidden md:block">Cores</span>
+                                <div class="flex md:flex-col gap-2 flex-wrap justify-center">
+                                    ${this.colors.map(c => `
+                                        <button onclick="Game1_Minho.setColor('${c.hex}')" 
+                                                id="color-btn-${c.hex.replace('#','')}"
+                                                style="background-color: ${c.hex}" 
+                                                class="w-10 h-10 rounded-full border-4 ${this.currentColor === c.hex ? 'border-gray-800 scale-110 shadow' : 'border-white'} transition"
+                                                title="${c.name}">
+                                        </button>
+                                    `).join('')}
+                                </div>
+
+                                <div class="h-px bg-pink-200 w-full hidden md:block my-1"></div>
+
+                                <span class="text-xs font-black text-brand-pink uppercase tracking-wide hidden md:block">Linha</span>
+                                <div class="flex md:flex-col gap-2 items-center">
+                                    <button onclick="Game1_Minho.setBrushSize(4)" class="w-8 h-8 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center text-xs font-bold ${this.brushSize === 4 ? 'ring-2 ring-brand-pink' : ''}">F</button>
+                                    <button onclick="Game1_Minho.setBrushSize(8)" class="w-8 h-8 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center text-xs font-bold ${this.brushSize === 8 ? 'ring-2 ring-brand-pink' : ''}">M</button>
+                                    <button onclick="Game1_Minho.setBrushSize(14)" class="w-8 h-8 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center text-xs font-bold ${this.brushSize === 14 ? 'ring-2 ring-brand-pink' : ''}">G</button>
+                                </div>
+                            </div>
+
+                            <div class="relative w-full max-w-[420px] aspect-[4/3]">
+                                <canvas id="minho-canvas" class="w-full h-full border-4 border-dashed border-pink-300 rounded-2xl bg-[#FFFDF7] shadow-inner touch-none cursor-crosshair"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Botões de Ação do Bordado -->
+                        <div class="flex flex-wrap justify-center items-center gap-3 mt-4">
+                            <button onclick="Game1_Minho.resetCanvas()" class="btn-kid bg-amber-500 text-white px-5 py-2.5 rounded-2xl font-bold text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-rotate-left"></i> Limpar Pano
+                            </button>
+                            <button onclick="Game1_Minho.saveToMural()" class="btn-kid bg-brand-green text-white px-6 py-2.5 rounded-2xl font-bold text-sm flex items-center gap-2 shadow">
+                                <i class="fa-solid fa-floppy-disk"></i> ${t.save_mural}
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                setTimeout(() => this.initCanvas(), 50);
+                AccessibilityModule.speak(`${t.game1_title}. ${t.game1_inst}`);
+            },
+
+            initCanvas() {
+                this.canvas = document.getElementById('minho-canvas');
+                if (!this.canvas) return;
+
+                const rect = this.canvas.getBoundingClientRect();
+                this.canvas.width = rect.width || 420;
+                this.canvas.height = rect.height || 315;
+                this.ctx = this.canvas.getContext('2d');
+                this.ctx.lineCap = 'round';
+                this.ctx.lineJoin = 'round';
+
+                this.drawBackgroundGuide();
+
+                this.canvas.addEventListener('mousedown', (e) => this.startDrawing(e));
+                this.canvas.addEventListener('mousemove', (e) => this.draw(e));
+                this.canvas.addEventListener('mouseup', () => this.stopDrawing());
+                this.canvas.addEventListener('mouseleave', () => this.stopDrawing());
+
+                this.canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.startDrawing(e.touches[0]);
+                }, { passive: false });
+                this.canvas.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    this.draw(e.touches[0]);
+                }, { passive: false });
+                this.canvas.addEventListener('touchend', () => this.stopDrawing());
+            },
+
+            drawBackgroundGuide() {
+                if (!this.ctx || !this.canvas) return;
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+
+                this.ctx.fillStyle = '#FFFDF7';
+                this.ctx.fillRect(0, 0, w, h);
+
+                // Moldura tracejada
+                this.ctx.strokeStyle = '#EF476F';
+                this.ctx.lineWidth = 3;
+                this.ctx.setLineDash([6, 6]);
+                this.ctx.strokeRect(10, 10, w - 20, h - 20);
+                this.ctx.setLineDash([]);
+
+                if (this.currentLevel === 2) {
+                    this.drawHeartGuide(w / 2, h / 2 + 10, Math.min(w, h) * 0.35);
+                }
+            },
+
+            drawHeartGuide(centerX, centerY, size) {
+                this.ctx.save();
+                this.ctx.beginPath();
+                const topCurveHeight = size * 0.3;
+                this.ctx.moveTo(centerX, centerY + size * 0.7);
+                this.ctx.bezierCurveTo(centerX - size, centerY, centerX - size, centerY - size * 0.7, centerX, centerY - topCurveHeight);
+                this.ctx.bezierCurveTo(centerX + size, centerY - size * 0.7, centerX + size, centerY, centerX, centerY + size * 0.7);
+                this.ctx.closePath();
+                this.ctx.strokeStyle = 'rgba(239, 71, 111, 0.4)';
+                this.ctx.lineWidth = 3;
+                this.ctx.setLineDash([8, 6]);
+                this.ctx.stroke();
+                this.ctx.restore();
+            },
+
+            getCoordinates(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                return {
+                    x: (e.clientX - rect.left) * (this.canvas.width / rect.width),
+                    y: (e.clientY - rect.top) * (this.canvas.height / rect.height)
+                };
+            },
+
+            startDrawing(e) {
+                this.isDrawing = true;
+                const coords = this.getCoordinates(e);
+                this.lastX = coords.x;
+                this.lastY = coords.y;
+            },
+
+            draw(e) {
+                if (!this.isDrawing || !this.ctx) return;
+                const coords = this.getCoordinates(e);
+
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.lastX, this.lastY);
+                this.ctx.lineTo(coords.x, coords.y);
+                this.ctx.strokeStyle = this.currentColor;
+                this.ctx.lineWidth = this.brushSize;
+                this.ctx.stroke();
+
+                this.lastX = coords.x;
+                this.lastY = coords.y;
+            },
+
+            stopDrawing() {
+                if (this.isDrawing) {
+                    this.isDrawing = false;
+                    AccessibilityModule.vibrate([15]);
+                }
+            },
+
+            setColor(hex) {
+                this.currentColor = hex;
+                document.querySelectorAll('[id^="color-btn-"]').forEach(btn => {
+                    btn.classList.remove('border-gray-800', 'scale-110', 'shadow');
+                    btn.classList.add('border-white');
+                });
+                const active = document.getElementById(`color-btn-${hex.replace('#','')}`);
+                if (active) {
+                    active.classList.remove('border-white');
+                    active.classList.add('border-gray-800', 'scale-110', 'shadow');
+                }
+            },
+
+            setBrushSize(size) {
+                this.brushSize = size;
+            },
+
+            resetCanvas() {
+                this.drawBackgroundGuide();
+                AccessibilityModule.showToast("Pano de bordado limpo!");
+            },
+
+            openFicha() {
+                FichaObraModule.open({
+                    who: "Bordadeiras tradicionais do Minho e as crianças na sala de aula.",
+                    why: "Para oferecer a quem se gosta muito, transmitir carinho e preservar a tradição minhota.",
+                    materials: "Pano de linho branco, agulha e linhas de algodão ou seda muito coloridas.",
+                    meaning: "Os corações, flores e pássaros bordados simbolizam o amor, a amizade e a alegria."
+                }, CoreApp.t('game1_title'), "");
+            },
+
+            saveToMural() {
+                if (!this.canvas) return;
+                const dataUrl = this.canvas.toDataURL('image/png');
+
+                MuralState.addWork({
+                    id: 'minho-work-' + Date.now(),
+                    title: `Bordado do Minho (Nível ${this.currentLevel})`,
+                    author: 'Criança Artista',
+                    region: 'Portugal (Minho)',
+                    date: new Date().toISOString().split('T')[0],
+                    image: dataUrl,
+                    fiche: {
+                        who: "Bordadeiras do Minho e as crianças na sala de aula.",
+                        why: "Para oferecer com carinho e expressar sentimentos bonitos.",
+                        materials: "Linhas de cores alegres sobre pano de linho.",
+                        meaning: "Coração bordado de amor, amizade e união."
+                    }
+                });
+
+                AccessibilityModule.playChime('fanfare');
+                try { confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } }); } catch(e){}
+                AccessibilityModule.showToast(CoreApp.t('saved_msg'));
+                AccessibilityModule.speak(CoreApp.t('saved_msg'));
+                CoreApp.openMural();
+            }
+        };
+
+        // ==========================================
+        // JOGO 2: FADO DE LISBOA (GUITARRA PORTUGUESA)
+        // ==========================================
+        const Game2_Lisboa = {
+            currentLevel: 1,
+            recordedNotes: [],
+            isPlayingBack: false,
+            guidedIndex: 0,
+            guitarSynth: null,
+
+            // As 6 cordas virtuais de grande formato com notas e frequências musicais
+            strings: [
+                { note: 'D4', label: 'Ré', color: '#EF476F', thickness: 'w-2.5', border: 'border-red-400' },
+                { note: 'E4', label: 'Mi', color: '#FFD166', thickness: 'w-2', border: 'border-amber-400' },
+                { note: 'F#4', label: 'Fá#', color: '#06D6A0', thickness: 'w-2', border: 'border-emerald-400' },
+                { note: 'A4', label: 'Lá', color: '#118AB2', thickness: 'w-1.5', border: 'border-cyan-400' },
+                { note: 'B4', label: 'Si', color: '#7209B7', thickness: 'w-1.5', border: 'border-purple-400' },
+                { note: 'D5', label: 'Ré +', color: '#F77F00', thickness: 'w-1', border: 'border-orange-400' }
+            ],
+
+            // Melodia guiada simples de Fado para o Nível 2
+            fadoMelody: ['D4', 'F#4', 'A4', 'B4', 'A4', 'F#4', 'D4'],
+
+            getSynth() {
+                if (!this.guitarSynth) {
+                    try {
+                        this.guitarSynth = new Tone.PolySynth(Tone.Synth, {
+                            oscillator: { type: "triangle8" },
+                            envelope: {
+                                attack: 0.005,
+                                decay: 0.8,
+                                sustain: 0.1,
+                                release: 1.2
+                            }
+                        }).toDestination();
+                    } catch (e) {
+                        console.warn("Tone.js fallback synth:", e);
+                    }
+                }
+                return this.guitarSynth;
+            },
+
+            start(level = 1) {
+                this.currentLevel = level;
+                this.recordedNotes = [];
+                this.isPlayingBack = false;
+                this.guidedIndex = 0;
+
+                const content = document.getElementById('app-content');
+                const t = CoreApp.translations[CoreApp.currentLang];
+
+                const levelDescriptions = {
+                    1: "Nível 1: Toca livremente nas cordas e escuta a Guitarra Portuguesa!",
+                    2: "Nível 2: Toca na corda iluminada para tocar uma melodia de Fado!",
+                    3: "Nível 3: Compõe e grava a tua melodia para partilhar no Mural!"
+                };
+
+                content.innerHTML = `
+                    <div class="w-full max-w-4xl mx-auto my-2 animate-fade-in">
+                        <!-- Topo do Jogo 2 -->
+                        <div class="flex flex-wrap justify-between items-center bg-amber-50 p-4 rounded-3xl border-4 border-amber-500 mb-4 gap-3 hc-element">
+                            <div class="flex items-center gap-3">
+                                <button onclick="CoreApp.goHome()" class="btn-kid bg-gray-200 text-gray-800 px-3 py-2 rounded-xl text-sm font-black">
+                                    <i class="fa-solid fa-arrow-left"></i> ${t.exit_btn}
+                                </button>
+                                <div>
+                                    <h2 class="text-xl sm:text-2xl font-black text-amber-900 flex items-center gap-2">
+                                        <i class="fa-solid fa-guitar text-amber-600"></i> ${t.game2_title}
+                                    </h2>
+                                    <p class="text-xs text-gray-700 font-bold">${t.game2_sub} • Nível ${level}</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <!-- Seletor de Níveis -->
+                                <div class="flex gap-1 bg-white p-1 rounded-2xl border-2 border-amber-300 shadow-sm">
+                                    <button onclick="Game2_Lisboa.start(1)" class="px-3 py-1.5 rounded-xl font-black text-xs ${level === 1 ? 'bg-amber-500 text-white shadow' : 'text-gray-600 hover:text-black'}">Nível 1</button>
+                                    <button onclick="Game2_Lisboa.start(2)" class="px-3 py-1.5 rounded-xl font-black text-xs ${level === 2 ? 'bg-amber-500 text-white shadow' : 'text-gray-600 hover:text-black'}">Nível 2</button>
+                                    <button onclick="Game2_Lisboa.start(3)" class="px-3 py-1.5 rounded-xl font-black text-xs ${level === 3 ? 'bg-amber-500 text-white shadow' : 'text-gray-600 hover:text-black'}">Nível 3</button>
+                                </div>
+
+                                <button onclick="Game2_Lisboa.openFicha()" class="btn-kid bg-brand-purple text-white px-3 py-2 rounded-2xl font-black text-xs flex items-center gap-1 shadow">
+                                    <i class="fa-solid fa-book-open"></i> ${t.ficha_btn}
+                                </button>
+
+                                <button onclick="AccessibilityModule.speak('${levelDescriptions[level]}')" class="btn-kid bg-amber-500 text-white px-3 py-2 rounded-2xl font-black text-xs flex items-center gap-1 shadow">
+                                    <i class="fa-solid fa-volume-high"></i> ${t.listen_btn}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Barra de Dica e Instrução -->
+                        <div class="bg-amber-100 border-2 border-amber-300 p-3 rounded-2xl mb-4 flex items-center justify-between text-xs sm:text-sm hc-element">
+                            <div class="flex items-center gap-2 font-bold text-amber-900">
+                                <i class="fa-solid fa-lightbulb text-xl text-amber-500"></i>
+                                <span>${levelDescriptions[level]}</span>
+                            </div>
+                            <span class="bg-white text-amber-800 font-black text-xs px-3 py-1 rounded-full border border-amber-200">
+                                Notas Tocadas: <span id="fado-notes-count">0</span>
+                            </span>
+                        </div>
+
+                        <!-- O CORPO DA GUITARRA PORTUGUESA & CORDAS GRANDES TÁTEIS -->
+                        <div class="bg-gradient-to-b from-amber-800 to-amber-950 p-6 sm:p-8 rounded-[40px] border-8 border-amber-600 shadow-2xl relative overflow-hidden hc-element">
+                            <!-- Boca da Guitarra (Rosácea Tradicional) -->
+                            <div class="w-44 h-44 sm:w-56 sm:h-56 mx-auto rounded-full bg-black/80 border-8 border-amber-400/80 shadow-inner flex items-center justify-center relative mb-6">
+                                <div class="w-36 h-36 sm:w-48 sm:h-48 rounded-full border-4 border-dashed border-amber-200/50 flex items-center justify-center">
+                                    <i class="fa-solid fa-music text-amber-300/40 text-4xl"></i>
+                                </div>
+                                <div id="guitar-sound-ripple" class="absolute inset-0 rounded-full border-4 border-amber-300 opacity-0 transition-opacity duration-300 pointer-events-none"></div>
+                            </div>
+
+                            <!-- Grade de Cordas Táteis Grandes -->
+                            <div class="grid grid-cols-6 gap-2 sm:gap-4 max-w-2xl mx-auto items-stretch justify-items-center relative z-10">
+                                ${this.strings.map((str, idx) => `
+                                    <button id="guitar-string-${str.note.replace('#','sharp')}"
+                                            onclick="Game2_Lisboa.playString('${str.note}', ${idx})"
+                                            class="btn-kid group flex flex-col items-center justify-between bg-amber-900/60 hover:bg-amber-700/80 active:scale-95 border-2 ${str.border} rounded-2xl w-full min-h-[190px] sm:min-h-[220px] p-2 transition-all cursor-pointer relative shadow-lg">
+                                        
+                                        <!-- Identificação superior da nota -->
+                                        <div class="w-8 h-8 rounded-full bg-white/90 text-gray-900 text-xs font-black flex items-center justify-center shadow">
+                                            ${str.label}
+                                        </div>
+
+                                        <!-- Representação visual da corda esticada -->
+                                        <div class="flex-1 my-2 flex items-center justify-center w-full">
+                                            <div id="visual-string-${str.note.replace('#','sharp')}" class="h-full ${str.thickness} bg-gradient-to-b from-gray-200 via-white to-gray-300 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.7)] group-hover:bg-amber-200 transition-transform"></div>
+                                        </div>
+
+                                        <!-- Nota cifrada -->
+                                        <span class="text-[10px] sm:text-xs font-black text-amber-200 group-hover:text-white">
+                                            ${str.note}
+                                        </span>
+
+                                        <!-- Pista Luminosa (Para o Nível 2) -->
+                                        <div id="guide-glow-${str.note.replace('#','sharp')}" class="hidden absolute -inset-1 rounded-2xl border-4 border-brand-yellow animate-pulse pointer-events-none"></div>
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Barra de Ações: Ouvir Gravação, Limpar e Guardar no Mural -->
+                        <div class="flex flex-wrap justify-center items-center gap-3 mt-5">
+                            <button onclick="Game2_Lisboa.playRecorded()" class="btn-kid bg-brand-pink text-white px-5 py-3 rounded-2xl font-black text-sm flex items-center gap-2 shadow-lg">
+                                <i class="fa-solid fa-circle-play text-lg"></i> Ouvir o que toquei
+                            </button>
+
+                            <button onclick="Game2_Lisboa.clearRecorded()" class="btn-kid bg-amber-500 text-white px-4 py-3 rounded-2xl font-black text-sm flex items-center gap-2 shadow-lg">
+                                <i class="fa-solid fa-rotate-left"></i> Limpar Melodia
+                            </button>
+
+                            <button onclick="Game2_Lisboa.saveToMural()" class="btn-kid bg-brand-green text-white px-5 py-3 rounded-2xl font-black text-sm flex items-center gap-2 shadow-lg">
+                                <i class="fa-solid fa-floppy-disk"></i> Guardar no Mural da Sala
+                            </button>
+
+                            <button onclick="CoreApp.goHome()" class="btn-kid bg-gray-200 text-gray-800 px-4 py-3 rounded-2xl font-black text-sm">
+                                ${t.exit_btn}
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                if (level === 2) {
+                    setTimeout(() => this.highlightCurrentGuidedNote(), 200);
+                }
+
+                AccessibilityModule.speak(`${t.game2_title}, nível ${level}. ${levelDescriptions[level]}`);
+            },
+
+            playString(note, index) {
+                if (this.isPlayingBack) return;
+
+                // Tocar o som da Guitarra Portuguesa via Tone.js
+                try {
+                    const synth = this.getSynth();
+                    if (synth) synth.triggerAttackRelease(note, "8n");
+                } catch (e) {
+                    console.warn(e);
+                }
+
+                // Efeito tátil de vibração
+                AccessibilityModule.vibrate([25]);
+
+                // Animar a vibração da corda visual
+                const strEl = document.getElementById(`visual-string-${note.replace('#','sharp')}`);
+                if (strEl) {
+                    strEl.classList.add('scale-x-150', 'animate-pulse');
+                    setTimeout(() => strEl.classList.remove('scale-x-150', 'animate-pulse'), 250);
+                }
+
+                // Animar a boca da guitarra
+                const ripple = document.getElementById('guitar-sound-ripple');
+                if (ripple) {
+                    ripple.classList.remove('opacity-0');
+                    setTimeout(() => ripple.classList.add('opacity-0'), 250);
+                }
+
+                // Guardar a nota gravada
+                this.recordedNotes.push(note);
+                const countEl = document.getElementById('fado-notes-count');
+                if (countEl) countEl.innerText = this.recordedNotes.length;
+
+                // Lógica especial do Nível 2 (Melodia Guiada de Fado)
+                if (this.currentLevel === 2) {
+                    const targetNote = this.fadoMelody[this.guidedIndex];
+                    if (note === targetNote) {
+                        this.guidedIndex++;
+                        if (this.guidedIndex >= this.fadoMelody.length) {
+                            try { confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } }); } catch(e){}
+                            AccessibilityModule.playChime('fanfare');
+                            AccessibilityModule.showToast("Excelente! Tocaste a melodia do Fado com sucesso!");
+                            AccessibilityModule.speak("Muito bem! Tocaste a melodia tradicional do Fado de Lisboa!");
+                            this.guidedIndex = 0;
+                        }
+                    }
+                    this.highlightCurrentGuidedNote();
+                }
+            },
+
+            highlightCurrentGuidedNote() {
+                // Remove destaques anteriores
+                document.querySelectorAll('[id^="guide-glow-"]').forEach(el => el.classList.add('hidden'));
+
+                if (this.currentLevel === 2 && this.guidedIndex < this.fadoMelody.length) {
+                    const targetNote = this.fadoMelody[this.guidedIndex];
+                    const glowEl = document.getElementById(`guide-glow-${targetNote.replace('#','sharp')}`);
+                    if (glowEl) glowEl.classList.remove('hidden');
+                }
+            },
+
+            playRecorded() {
+                if (this.recordedNotes.length === 0) {
+                    AccessibilityModule.showToast("Ainda não tocaste nenhuma nota!");
+                    AccessibilityModule.speak("Ainda não tocaste nenhuma nota. Toca primeiro nas cordas da guitarra!");
+                    return;
+                }
+
+                if (this.isPlayingBack) return;
+                this.isPlayingBack = true;
+
+                AccessibilityModule.showToast("A tocar a tua melodia...");
+                AccessibilityModule.speak("A escutar a tua melodia!");
+
+                try {
+                    const synth = this.getSynth();
+                    const now = Tone.now();
+
+                    this.recordedNotes.forEach((note, idx) => {
+                        synth.triggerAttackRelease(note, "8n", now + (idx * 0.35));
+                    });
+
+                    setTimeout(() => {
+                        this.isPlayingBack = false;
+                        AccessibilityModule.showToast("Melodia concluída!");
+                    }, (this.recordedNotes.length * 350) + 300);
+                } catch (e) {
+                    this.isPlayingBack = false;
+                }
+            },
+
+            clearRecorded() {
+                this.recordedNotes = [];
+                const countEl = document.getElementById('fado-notes-count');
+                if (countEl) countEl.innerText = '0';
+                AccessibilityModule.showToast("Melodia limpa!");
+                AccessibilityModule.speak("Melodia limpa. Podes tocar novas notas!");
+            },
+
+            saveToMural() {
+                const notesList = this.recordedNotes.length > 0 ? this.recordedNotes.join(' - ') : "D4 - F#4 - A4 - D5";
+
+                MuralState.addWork({
+                    id: 'fado-melody-' + Date.now(),
+                    title: `Melodia de Fado de Lisboa (Nível ${this.currentLevel})`,
+                    author: 'Pequeno Fadista',
+                    region: 'Portugal (Lisboa)',
+                    date: new Date().toISOString().split('T')[0],
+                    image: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23fffbeb"/><ellipse cx="50" cy="55" rx="36" ry="40" fill="%23D97706" stroke="%232B2D42" stroke-width="2.5"/><circle cx="50" cy="55" r="14" fill="%232B2D42"/><path d="M46 15 L54 15 L54 35 L46 35 Z" fill="%2392400E"/><circle cx="50" cy="12" r="6" fill="%23EF476F"/><line x1="42" y1="55" x2="58" y2="55" stroke="%23FFD166" stroke-width="2"/><text x="50" y="86" font-size="8" font-weight="bold" text-anchor="middle" fill="%2392400E">Fado de Lisboa</text></svg>',
+                    fiche: {
+                        who: "Guitarristas, luthiers e crianças a cantar e dedilhar na sala de aula.",
+                        why: "Para acompanhar o Fado, expressar emoções, saudades e partilhar a cultura de Lisboa com o mundo.",
+                        materials: "Madeiras nobres de nogueira ou mogno, 12 cordas de aço e a voluta tradicional em caracol.",
+                        meaning: "Património Imaterial da Humanidade pela UNESCO, símbolo de alma, amizade e história de Portugal."
+                    }
+                });
+
+                AccessibilityModule.playChime('fanfare');
+                try { confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } }); } catch(e){}
+                AccessibilityModule.showToast(CoreApp.t('saved_msg'));
+                AccessibilityModule.speak("A tua melodia de Guitarra Portuguesa foi guardada no Mural da Sala!");
+                CoreApp.openMural();
+            },
+
+            openFicha() {
+                FichaObraModule.open({
+                    who: "Guitarristas, mestres artesãos de guitarras e fadistas em Lisboa.",
+                    why: "Para acompanhar as canções de Fado, contar histórias de pessoas e bairros e criar belas melodias.",
+                    materials: "Madeiras nobres esculpidas, doze cordas de aço agrupadas aos pares e a voluta em forma de caracol.",
+                    meaning: "Património Imaterial da Humanidade pela UNESCO, exprime sentimentos de carinho, saudade e identidade portuguesa."
+                }, CoreApp.t('game2_title'), "");
+            }
+        };
+
+        // ==========================================
+        // JOGO 3: MÁSCARAS DE ÁFRICA (JOGO DE MEMÓRIA COM 3 NÍVEIS E MÁSCARAS GRANDES)
+        // ==========================================
+        const Game3_Africa = {
+            currentLevel: 1,
+            cards: [],
+            flippedCards: [],
+            matchedCount: 0,
+            isLocked: false,
+
+            // Banco de dados com 6 grandes máscaras tradicionais africanas com SVGs de grande visibilidade
+            masksData: [
+                {
+                    id: 'gelede',
+                    name: { pt: 'Máscara Gélédé', en: 'Gélédé Mask', uk: 'Маска Геледе' },
+                    origin: 'Iorubá (Benim e Nigéria)',
+                    meaning: 'Homenageia o poder das mães, a sabedoria das mulheres e a harmonia social.',
+                    svg: `<svg viewBox="0 0 100 100" class="w-24 h-24 sm:w-28 sm:h-28 drop-shadow-md">
+                        <ellipse cx="50" cy="54" rx="34" ry="40" fill="#D97706" stroke="#2B2D42" stroke-width="3"/>
+                        <circle cx="50" cy="18" r="10" fill="#EF476F" stroke="#2B2D42" stroke-width="2"/>
+                        <path d="M42 28 Q50 34 58 28" stroke="#FFD166" stroke-width="3" fill="none"/>
+                        <ellipse cx="38" cy="46" rx="7" ry="4" fill="#2B2D42"/>
+                        <ellipse cx="62" cy="46" rx="7" ry="4" fill="#2B2D42"/>
+                        <circle cx="38" cy="46" r="2" fill="#FFFFFF"/>
+                        <circle cx="62" cy="46" r="2" fill="#FFFFFF"/>
+                        <polygon points="50,48 45,62 55,62" fill="#B45309" stroke="#2B2D42" stroke-width="1.5"/>
+                        <ellipse cx="50" cy="74" rx="10" ry="4" fill="#EF476F" stroke="#2B2D42" stroke-width="2"/>
+                        <line x1="28" y1="52" x2="33" y2="52" stroke="#2B2D42" stroke-width="2"/>
+                        <line x1="67" y1="52" x2="72" y2="52" stroke="#2B2D42" stroke-width="2"/>
+                    </svg>`
+                },
+                {
+                    id: 'kanaga',
+                    name: { pt: 'Máscara Kanaga', en: 'Kanaga Mask', uk: 'Маска Канага' },
+                    origin: 'Povo Dogon (Mali)',
+                    meaning: 'A cruz de dois braços liga o céu à terra e celebra a criação da vida.',
+                    svg: `<svg viewBox="0 0 100 100" class="w-24 h-24 sm:w-28 sm:h-28 drop-shadow-md">
+                        <!-- Cruz Kanaga Superior e Inferior -->
+                        <rect x="47" y="4" width="6" height="34" fill="#2B2D42"/>
+                        <path d="M26 12 L74 12 M26 4 L26 20 M74 4 L74 20" stroke="#EF476F" stroke-width="4" stroke-linecap="round" fill="none"/>
+                        <!-- Rosto Triangular -->
+                        <polygon points="50,34 26,88 74,88" fill="#F59E0B" stroke="#2B2D42" stroke-width="3"/>
+                        <rect x="34" y="52" width="10" height="18" rx="4" fill="#2B2D42"/>
+                        <rect x="56" y="52" width="10" height="18" rx="4" fill="#2B2D42"/>
+                        <line x1="50" y1="50" x2="50" y2="76" stroke="#2B2D42" stroke-width="3"/>
+                        <line x1="38" y1="80" x2="62" y2="80" stroke="#2B2D42" stroke-width="3"/>
+                    </svg>`
+                },
+                {
+                    id: 'kplekple',
+                    name: { pt: 'Máscara Kple Kple', en: 'Kple Kple Mask', uk: 'Маска Кпле Кпле' },
+                    origin: 'Povo Baule (Costa do Marfim)',
+                    meaning: 'Representa o sol e a lua e dança nas aldeias para trazer alegria.',
+                    svg: `<svg viewBox="0 0 100 100" class="w-24 h-24 sm:w-28 sm:h-28 drop-shadow-md">
+                        <!-- Cornos lunares -->
+                        <path d="M38 34 Q30 8 16 14 Q28 26 34 38" fill="#118AB2" stroke="#2B2D42" stroke-width="2"/>
+                        <path d="M62 34 Q70 8 84 14 Q72 26 66 38" fill="#118AB2" stroke="#2B2D42" stroke-width="2"/>
+                        <!-- Disco solar redondo -->
+                        <circle cx="50" cy="58" r="32" fill="#EF476F" stroke="#2B2D42" stroke-width="3"/>
+                        <circle cx="50" cy="58" r="26" fill="none" stroke="#FFD166" stroke-width="2" stroke-dasharray="4,4"/>
+                        <circle cx="40" cy="54" r="6" fill="#2B2D42"/>
+                        <circle cx="60" cy="54" r="6" fill="#2B2D42"/>
+                        <circle cx="40" cy="54" r="2" fill="#FFF"/>
+                        <circle cx="60" cy="54" r="2" fill="#FFF"/>
+                        <rect x="44" y="68" width="12" height="6" rx="2" fill="#2B2D42"/>
+                    </svg>`
+                },
+                {
+                    id: 'bwami',
+                    name: { pt: 'Máscara Lega Bwami', en: 'Lega Bwami Mask', uk: 'Маска Лега Бвамі' },
+                    origin: 'Povo Lega (Rep. Dem. do Congo)',
+                    meaning: 'Pintada com caulino branco, simboliza a sabedoria e a gentileza dos anciãos.',
+                    svg: `<svg viewBox="0 0 100 100" class="w-24 h-24 sm:w-28 sm:h-28 drop-shadow-md">
+                        <ellipse cx="50" cy="52" rx="30" ry="42" fill="#F8FAFC" stroke="#2B2D42" stroke-width="3"/>
+                        <path d="M32 40 Q50 48 68 40" stroke="#06D6A0" stroke-width="3" fill="none"/>
+                        <ellipse cx="38" cy="46" rx="6" ry="3" fill="#2B2D42"/>
+                        <ellipse cx="62" cy="46" rx="6" ry="3" fill="#2B2D42"/>
+                        <line x1="50" y1="46" x2="50" y2="66" stroke="#2B2D42" stroke-width="3"/>
+                        <ellipse cx="50" cy="76" rx="6" ry="3" fill="#2B2D42"/>
+                        <!-- Barba cerimonial trançada -->
+                        <path d="M38 88 L38 98 M44 90 L44 100 M50 90 L50 100 M56 90 L56 100 M62 88 L62 98" stroke="#D97706" stroke-width="2" stroke-linecap="round"/>
+                    </svg>`
+                },
+                {
+                    id: 'fang',
+                    name: { pt: 'Máscara Fang', en: 'Fang Ngil Mask', uk: 'Маска Фанг' },
+                    origin: 'Povo Fang (Gabão)',
+                    meaning: 'Com o seu nariz alongado e elegante, transmite paz, serenidade e justiça.',
+                    svg: `<svg viewBox="0 0 100 100" class="w-24 h-24 sm:w-28 sm:h-28 drop-shadow-md">
+                        <path d="M30 18 Q50 10 70 18 L66 84 Q50 96 34 84 Z" fill="#FFFBEB" stroke="#2B2D42" stroke-width="3"/>
+                        <!-- Sobrancelhas longas em arco -->
+                        <path d="M34 42 Q50 30 50 68" stroke="#2B2D42" stroke-width="3" fill="none"/>
+                        <path d="M66 42 Q50 30 50 68" stroke="#2B2D42" stroke-width="3" fill="none"/>
+                        <line x1="32" y1="46" x2="44" y2="46" stroke="#2B2D42" stroke-width="2.5"/>
+                        <line x1="56" y1="46" x2="68" y2="46" stroke="#2B2D42" stroke-width="2.5"/>
+                        <ellipse cx="50" cy="78" rx="5" ry="2" fill="#EF476F"/>
+                        <path d="M40 22 Q50 26 60 22" stroke="#118AB2" stroke-width="2" fill="none"/>
+                    </svg>`
+                },
+                {
+                    id: 'chokwe',
+                    name: { pt: 'Máscara Chokwe Pwo', en: 'Chokwe Pwo Mask', uk: 'Маска Чокве Пво' },
+                    origin: 'Povo Chokwe (Angola)',
+                    meaning: 'Celebra a graça, a generosidade e a beleza interior da juventude.',
+                    svg: `<svg viewBox="0 0 100 100" class="w-24 h-24 sm:w-28 sm:h-28 drop-shadow-md">
+                        <ellipse cx="50" cy="54" rx="32" ry="38" fill="#B45309" stroke="#2B2D42" stroke-width="3"/>
+                        <!-- Penteado tradicional no topo -->
+                        <path d="M26 36 C26 14 74 14 74 36 Z" fill="#2B2D42"/>
+                        <circle cx="50" cy="22" r="6" fill="#EF476F"/>
+                        <!-- Cruz Cingelyengelye na testa -->
+                        <path d="M50 36 L50 44 M46 40 L54 40" stroke="#FFD166" stroke-width="2.5" stroke-linecap="round"/>
+                        <!-- Olhos amendoados -->
+                        <ellipse cx="38" cy="52" rx="8" ry="4" fill="#FEF3C7" stroke="#2B2D42" stroke-width="1.5"/>
+                        <ellipse cx="62" cy="52" rx="8" ry="4" fill="#FEF3C7" stroke="#2B2D42" stroke-width="1.5"/>
+                        <line x1="30" y1="52" x2="46" y2="52" stroke="#2B2D42" stroke-width="2"/>
+                        <line x1="54" y1="52" x2="70" y2="52" stroke="#2B2D42" stroke-width="2"/>
+                        <polygon points="50,54 46,65 54,65" fill="#92400E"/>
+                        <path d="M42 74 Q50 78 58 74" stroke="#FEF3C7" stroke-width="3" fill="none"/>
+                    </svg>`
+                }
+            ],
+
+            start(level = 1) {
+                this.currentLevel = level;
+                this.flippedCards = [];
+                this.isLocked = false;
+                this.matchedCount = 0;
+
+                // Nível 1: 3 pares (6 cartas) | Nível 2: 4 pares (8 cartas) | Nível 3: 6 pares (12 cartas)
+                const pairsCount = level === 1 ? 3 : (level === 2 ? 4 : 6);
+                const selectedMasks = this.masksData.slice(0, pairsCount);
+
+                // Criar pares e baralhar
+                const deck = [];
+                selectedMasks.forEach(mask => {
+                    deck.push({ ...mask, cardUid: mask.id + '-1' });
+                    deck.push({ ...mask, cardUid: mask.id + '-2' });
+                });
+                this.cards = deck.sort(() => Math.random() - 0.5);
+
+                const t = CoreApp.translations[CoreApp.currentLang];
+                const content = document.getElementById('app-content');
+
+                // Grelha responsiva adaptada para cartões extragrandes
+                const gridColsClass = level === 1
+                    ? 'grid-cols-2 sm:grid-cols-3'
+                    : (level === 2 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4');
+
+                content.innerHTML = `
+                    <div class="w-full max-w-5xl mx-auto my-2 animate-fade-in">
+                        <!-- Barra de Cabeçalho do Jogo 3 -->
+                        <div class="flex flex-wrap justify-between items-center bg-emerald-50 p-4 rounded-3xl border-4 border-emerald-600 mb-4 gap-3 hc-element">
+                            <div class="flex items-center gap-3">
+                                <button onclick="CoreApp.goHome()" class="btn-kid bg-gray-200 text-gray-800 px-3 py-2 rounded-xl text-sm font-black">
+                                    <i class="fa-solid fa-arrow-left"></i> ${t.exit_btn}
+                                </button>
+                                <div>
+                                    <h2 class="text-xl sm:text-2xl font-black text-emerald-800 flex items-center gap-2">
+                                        <i class="fa-solid fa-mask text-emerald-600"></i> ${t.game3_title}
+                                    </h2>
+                                    <p class="text-xs text-gray-700 font-bold">${t.game3_sub} • Nível ${level} (${pairsCount} Pares)</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <!-- Seletor de Níveis 1, 2 e 3 -->
+                                <div class="flex gap-1 bg-white p-1 rounded-2xl border-2 border-emerald-300 shadow-sm">
+                                    <button onclick="Game3_Africa.start(1)" class="px-3 py-1.5 rounded-xl font-black text-xs ${level === 1 ? 'bg-emerald-600 text-white shadow' : 'text-gray-600 hover:text-black'}">Nível 1 (3 Pares)</button>
+                                    <button onclick="Game3_Africa.start(2)" class="px-3 py-1.5 rounded-xl font-black text-xs ${level === 2 ? 'bg-emerald-600 text-white shadow' : 'text-gray-600 hover:text-black'}">Nível 2 (4 Pares)</button>
+                                    <button onclick="Game3_Africa.start(3)" class="px-3 py-1.5 rounded-xl font-black text-xs ${level === 3 ? 'bg-emerald-600 text-white shadow' : 'text-gray-600 hover:text-black'}">Nível 3 (6 Pares)</button>
+                                </div>
+
+                                <button onclick="Game3_Africa.openFicha()" class="btn-kid bg-brand-purple text-white px-3 py-2 rounded-2xl font-black text-xs flex items-center gap-1 shadow">
+                                    <i class="fa-solid fa-book-open"></i> ${t.ficha_btn}
+                                </button>
+
+                                <button onclick="AccessibilityModule.speak('${t.game3_inst}')" class="btn-kid bg-amber-500 text-white px-3 py-2 rounded-2xl font-black text-xs flex items-center gap-1 shadow">
+                                    <i class="fa-solid fa-volume-high"></i> ${t.listen_btn}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Barra de Dica e Contador -->
+                        <div class="bg-amber-100 border-2 border-amber-300 p-3 rounded-2xl mb-4 flex items-center justify-between text-xs sm:text-sm hc-element">
+                            <div class="flex items-center gap-2 font-bold text-amber-900">
+                                <i class="fa-solid fa-lightbulb text-xl text-amber-500"></i>
+                                <span>${t.game3_inst}</span>
+                            </div>
+                            <div class="bg-white text-emerald-800 font-black px-3 py-1 rounded-full border border-amber-200 shadow-sm text-xs">
+                                Pares: <span id="africa-pairs-counter">0</span> / ${pairsCount}
+                            </div>
+                        </div>
+
+                        <!-- GRELHA DOS CARTÕES TÁTEIS E GRANDES DE MEMÓRIA -->
+                        <div class="grid ${gridColsClass} gap-3 sm:gap-4 p-3 bg-emerald-100/50 rounded-3xl border-4 border-emerald-500 shadow-xl hc-element" id="africa-board">
+                            ${this.cards.map((card, idx) => `
+                                <div id="mask-card-${idx}" 
+                                     onclick="Game3_Africa.flipCard(${idx})"
+                                     class="btn-kid bg-white border-4 border-emerald-400 rounded-3xl min-h-[170px] sm:min-h-[210px] p-3 cursor-pointer flex flex-col items-center justify-center text-center shadow-lg transition-all hover:scale-[1.03] active:scale-95 relative select-none">
+                                    
+                                    <!-- Costas do Cartão (Grande Ícone Padrão Africano) -->
+                                    <div id="card-back-${idx}" class="flex flex-col items-center justify-center w-full h-full">
+                                        <div class="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-600 text-amber-300 rounded-2xl flex items-center justify-center text-3xl sm:text-4xl shadow-inner mb-2">
+                                            <i class="fa-solid fa-mask"></i>
+                                        </div>
+                                        <span class="text-xs sm:text-sm font-black text-emerald-900">Toca para Virar</span>
+                                        <span class="text-[10px] text-gray-500 font-bold mt-0.5">África</span>
+                                    </div>
+
+                                    <!-- Frente do Cartão (Máscara Africana Grande e Colorida) -->
+                                    <div id="card-front-${idx}" class="hidden flex-col items-center justify-center w-full h-full animate-fade-in">
+                                        <div class="my-1 transform transition hover:scale-105">
+                                            ${card.svg}
+                                        </div>
+                                        <h4 class="font-black text-xs sm:text-sm text-gray-900 leading-tight mt-1">
+                                            ${card.name[CoreApp.currentLang] || card.name.pt}
+                                        </h4>
+                                        <span class="text-[10px] text-emerald-700 font-black mt-0.5 max-w-full truncate px-1">
+                                            ${card.origin}
+                                        </span>
+                                    </div>
+
+                                    <!-- Selo de Par Encontrado -->
+                                    <div id="card-check-${idx}" class="hidden absolute top-2 right-2 bg-emerald-500 text-white w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-sm font-black shadow-md">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+
+                AccessibilityModule.speak(`${t.game3_title}, nível ${level}. ${t.game3_inst}`);
+            },
+
+            flipCard(index) {
+                if (this.isLocked) return;
+
+                const front = document.getElementById(`card-front-${index}`);
+                const back = document.getElementById(`card-back-${index}`);
+                const cardEl = document.getElementById(`mask-card-${index}`);
+
+                if (!front || !back || !cardEl) return;
+                // Já está virada ou já pertence a um par encontrado
+                if (!front.classList.contains('hidden')) return;
+
+                // Virar a carta
+                back.classList.add('hidden');
+                front.classList.remove('hidden');
+                front.classList.add('flex');
+                cardEl.classList.remove('bg-white', 'border-emerald-400');
+                cardEl.classList.add('bg-amber-50', 'border-amber-500', 'ring-4', 'ring-amber-300');
+
+                AccessibilityModule.vibrate([25]);
+
+                const cardData = this.cards[index];
+                this.flippedCards.push({ index, card: cardData });
+
+                // Ouvir o nome da máscara virada
+                const maskName = cardData.name[CoreApp.currentLang] || cardData.name.pt;
+
+                if (this.flippedCards.length === 1) {
+                    AccessibilityModule.speak(maskName);
+                } else if (this.flippedCards.length === 2) {
+                    this.isLocked = true;
+                    this.checkMatch();
+                }
+            },
+
+            checkMatch() {
+                const [first, second] = this.flippedCards;
+                const pairsRequired = this.currentLevel === 1 ? 3 : (this.currentLevel === 2 ? 4 : 6);
+
+                if (first.card.id === second.card.id) {
+                    // Par correto!
+                    this.matchedCount++;
+                    const counterEl = document.getElementById('africa-pairs-counter');
+                    if (counterEl) counterEl.innerText = this.matchedCount;
+
+                    const maskName = first.card.name[CoreApp.currentLang] || first.card.name.pt;
+
+                    [first.index, second.index].forEach(idx => {
+                        const cardEl = document.getElementById(`mask-card-${idx}`);
+                        const checkEl = document.getElementById(`card-check-${idx}`);
+                        if (cardEl) {
+                            cardEl.classList.remove('bg-amber-50', 'border-amber-500', 'ring-4', 'ring-amber-300');
+                            cardEl.classList.add('bg-emerald-50', 'border-emerald-600', 'ring-4', 'ring-emerald-400');
+                        }
+                        if (checkEl) checkEl.classList.remove('hidden');
+                    });
+
+                    AccessibilityModule.playChime('success');
+                    AccessibilityModule.vibrate([40, 80, 40]);
+                    AccessibilityModule.showToast(`Par encontrado: ${maskName}!`);
+                    AccessibilityModule.speak(`Muito bem! Encontraste o par da ${maskName}!`);
+
+                    this.flippedCards = [];
+                    this.isLocked = false;
+
+                    // Todos os pares encontrados: celebração e vitória do nível!
+                    if (this.matchedCount === pairsRequired) {
+                        setTimeout(() => this.celebrateLevelComplete(), 600);
+                    }
+                } else {
+                    // Erro: vibração e revirar após pequeno intervalo
+                    AccessibilityModule.playChime('error');
+                    AccessibilityModule.vibrate([90]);
+
+                    [first.index, second.index].forEach(idx => {
+                        const cardEl = document.getElementById(`mask-card-${idx}`);
+                        if (cardEl) cardEl.classList.add('animate-shake', 'border-red-400', 'bg-red-50');
+                    });
+
+                    setTimeout(() => {
+                        [first.index, second.index].forEach(idx => {
+                            const front = document.getElementById(`card-front-${idx}`);
+                            const back = document.getElementById(`card-back-${idx}`);
+                            const cardEl = document.getElementById(`mask-card-${idx}`);
+
+                            if (front && back && cardEl) {
+                                front.classList.add('hidden');
+                                front.classList.remove('flex');
+                                back.classList.remove('hidden');
+                                cardEl.classList.remove('animate-shake', 'border-red-400', 'bg-red-50', 'bg-amber-50', 'border-amber-500', 'ring-4', 'ring-amber-300');
+                                cardEl.classList.add('bg-white', 'border-emerald-400');
+                            }
+                        });
+
+                        this.flippedCards = [];
+                        this.isLocked = false;
+                    }, 1000);
+                }
+            },
+
+            celebrateLevelComplete() {
+                try { confetti({ particleCount: 110, spread: 75, origin: { y: 0.6 } }); } catch(e){}
+                AccessibilityModule.playChime('fanfare');
+
+                const t = CoreApp.translations[CoreApp.currentLang];
+                const content = document.getElementById('app-content');
+                const sampleMask = this.masksData[0];
+
+                content.innerHTML = `
+                    <div class="bg-white border-8 border-emerald-600 rounded-3xl p-6 sm:p-7 max-w-2xl w-full text-center shadow-2xl hc-element animate-fade-in my-3">
+                        <div class="text-6xl mb-2">🎉</div>
+                        <span class="bg-emerald-100 text-emerald-800 text-xs px-3 py-1 rounded-full font-black uppercase tracking-wider">
+                            Vitória no Jogo de Memória
+                        </span>
+                        <h2 class="text-3xl sm:text-4xl font-black text-emerald-900 mt-2">Parabéns! Encontraste Todos os Pares!</h2>
+                        <p class="text-sm sm:text-base text-gray-700 font-bold mt-1">Completaste com sucesso o Nível ${this.currentLevel} das Máscaras de África!</p>
+
+                        <!-- Cartão em Destaque de Saber Cultural -->
+                        <div class="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-4 text-left my-5 flex flex-col sm:flex-row items-center gap-4">
+                            <div class="w-24 h-24 sm:w-28 sm:h-28 bg-white border-2 border-emerald-200 rounded-2xl flex items-center justify-center p-2 shadow-inner shrink-0">
+                                ${sampleMask.svg}
+                            </div>
+                            <div class="flex-1">
+                                <span class="bg-emerald-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">Saber Cultural</span>
+                                <h3 class="text-lg font-black text-emerald-900 mt-1">${sampleMask.name[CoreApp.currentLang] || sampleMask.name.pt} (${sampleMask.origin})</h3>
+                                <p class="text-xs text-gray-700 font-bold mt-1">${sampleMask.meaning}</p>
+                                
+                                <button onclick="Game3_Africa.openFicha()" class="mt-3 btn-kid bg-brand-purple text-white px-3.5 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 shadow">
+                                    <i class="fa-solid fa-book-open"></i> ${t.ficha_btn}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Botões de Ação Final -->
+                        <div class="flex flex-wrap gap-3 justify-center items-center">
+                            <button onclick="Game3_Africa.saveToMural()" class="btn-kid bg-brand-green text-white px-5 py-3 rounded-2xl font-black text-sm flex items-center gap-2 shadow-lg">
+                                <i class="fa-solid fa-floppy-disk"></i> ${t.save_mural}
+                            </button>
+
+                            ${this.currentLevel < 3 ? `
+                                <button onclick="Game3_Africa.start(${this.currentLevel + 1})" class="btn-kid bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl font-black text-sm flex items-center gap-2 shadow-lg animate-pulse-gentle">
+                                    Avançar para o Nível ${this.currentLevel + 1} <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            ` : `
+                                <button onclick="Game3_Africa.start(1)" class="btn-kid bg-emerald-600 text-white px-5 py-3 rounded-2xl font-black text-sm flex items-center gap-2 shadow-lg">
+                                    <i class="fa-solid fa-rotate-left"></i> Jogar de Novo
+                                </button>
+                            `}
+
+                            <button onclick="CoreApp.goHome()" class="btn-kid bg-gray-200 text-gray-800 px-5 py-3 rounded-2xl font-black text-sm">
+                                ${t.exit_btn}
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                AccessibilityModule.speak(`Parabéns! Completaste com sucesso o nível ${this.currentLevel} do jogo de memória das Máscaras de África!`);
+            },
+
+            openFicha() {
+                FichaObraModule.open({
+                    who: "Mestres escultores dos povos Iorubá, Dogon, Baule, Lega, Fang e Chokwe em África.",
+                    why: "Para homenagear a sabedoria das mães, celebrar as colheitas, contar histórias e trazer harmonia e proteção à comunidade.",
+                    materials: "Madeiras nobres esculpidas à mão, caulino branco, pigmentos naturais, sementes e fibras vegetais trançadas.",
+                    meaning: "Cada máscara representa espíritos de proteção, respeito pela natureza, união comunitária e alegria nas celebrações tradicionais."
+                }, CoreApp.t('game3_title'), "");
+            },
+
+            saveToMural() {
+                MuralState.addWork({
+                    id: 'africa-masks-' + Date.now(),
+                    title: `Jogo de Memória das Máscaras de África (Nível ${this.currentLevel})`,
+                    author: 'Pequeno Explorador Africano',
+                    region: 'África Diversa',
+                    date: new Date().toISOString().split('T')[0],
+                    image: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23ecfdf5"/><ellipse cx="50" cy="55" rx="32" ry="38" fill="%23D97706" stroke="%232B2D42" stroke-width="2.5"/><ellipse cx="38" cy="46" rx="6" ry="3" fill="%232B2D42"/><ellipse cx="62" cy="46" rx="6" ry="3" fill="%232B2D42"/><ellipse cx="50" cy="62" rx="4" ry="2" fill="%232B2D42"/><path d="M38 72 Q50 78 62 72" stroke="%232B2D42" stroke-width="3" fill="none"/><circle cx="50" cy="18" r="10" fill="%23EF476F"/></svg>',
+                    fiche: {
+                        who: "Mestres escultores africanos e a criança na sala de aula.",
+                        why: "Para conhecer a arte tradicional das máscaras e treinar a concentração visual.",
+                        materials: "Madeiras nobres esculpidas, pigmentos naturais e memória visual.",
+                        meaning: "Equilíbrio, celebração, respeito pelos antepassados e riqueza intercultural."
+                    }
+                });
+
+                AccessibilityModule.showToast(CoreApp.t('saved_msg'));
+                AccessibilityModule.speak(CoreApp.t('saved_msg'));
+                CoreApp.openMural();
+            }
+        };
+
+        // ==========================================
+        // JOGO 4: JAPÃO (SOMBRAS & OBJETOS)
+        // ==========================================
+        const Game4_Japan = {
+            currentLevel: 1,
+            selectedImage: null,
+            selectedShadow: null,
+            matchedPairs: [],
+
+            items: [
+                {
+                    id: 'tsuru',
+                    name: { pt: 'Origami Tsuru', en: 'Crane Origami', uk: 'Журавель Орігамі' },
+                    svg: `<svg viewBox="0 0 100 100" class="w-16 h-16"><path d="M50 15 L85 80 L60 70 L50 90 L40 70 L15 80 Z" fill="#EF476F" stroke="#2B2D42" stroke-width="2"/><path d="M50 15 L50 90 M50 45 L85 80 M50 45 L15 80" stroke="#FFF" stroke-width="2" fill="none"/></svg>`
+                },
+                {
+                    id: 'sensu',
+                    name: { pt: 'Leque Sensu', en: 'Sensu Fan', uk: 'Віяло Сенсу' },
+                    svg: `<svg viewBox="0 0 100 100" class="w-16 h-16"><path d="M10 70 Q50 10 90 70 L50 90 Z" fill="#FFD166" stroke="#2B2D42" stroke-width="2"/><circle cx="50" cy="50" r="8" fill="#118AB2"/></svg>`
+                },
+                {
+                    id: 'kyusu',
+                    name: { pt: 'Bule de Chá', en: 'Tea Teapot', uk: 'Чайник Кюсу' },
+                    svg: `<svg viewBox="0 0 100 100" class="w-16 h-16"><path d="M30 45 Q30 25 55 25 Q80 25 80 45 Q80 75 55 75 Q30 75 30 45 Z" fill="#06D6A0" stroke="#2B2D42" stroke-width="2"/><rect x="10" y="42" width="20" height="8" rx="4" fill="#2B2D42"/></svg>`
+                }
+            ],
+
+            start(level = 1) {
+                this.currentLevel = level;
+                this.selectedImage = null;
+                this.selectedShadow = null;
+                this.matchedPairs = [];
+
+                const content = document.getElementById('app-content');
+                const t = CoreApp.translations[CoreApp.currentLang];
+                const shadowItems = [...this.items].sort(() => Math.random() - 0.5);
+
+                content.innerHTML = `
+                    <div class="w-full max-w-3xl mx-auto my-2 animate-fade-in">
+                        <div class="flex flex-wrap justify-between items-center bg-red-50 p-4 rounded-3xl border-4 border-red-400 mb-4 gap-3 hc-element">
+                            <div class="flex items-center gap-3">
+                                <button onclick="CoreApp.goHome()" class="btn-kid bg-gray-200 text-gray-800 px-3 py-2 rounded-xl text-sm font-black">
+                                    <i class="fa-solid fa-arrow-left"></i> ${t.exit_btn}
+                                </button>
+                                <div>
+                                    <h2 class="text-xl sm:text-2xl font-black text-red-600 flex items-center gap-2">
+                                        <i class="fa-solid fa-shapes"></i> ${t.game4_title}
+                                    </h2>
+                                    <p class="text-xs text-gray-700 font-bold">${t.game4_sub}</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <button onclick="Game4_Japan.openFicha()" class="btn-kid bg-brand-purple text-white px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1">
+                                    <i class="fa-solid fa-book-open"></i> ${t.ficha_btn}
+                                </button>
+                                <button onclick="AccessibilityModule.speak('${t.game4_inst}')" class="btn-kid bg-amber-500 text-white px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1">
+                                    <i class="fa-solid fa-volume-high"></i> ${t.listen_btn}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Coluna Colorida -->
+                            <div class="bg-white p-4 rounded-3xl border-4 border-red-200 shadow-md">
+                                <h3 class="text-center font-black text-red-600 mb-3 text-sm">Objetos Coloridos</h3>
+                                <div class="grid grid-cols-1 gap-3">
+                                    ${this.items.map(item => `
+                                        <div id="jp-img-${item.id}" onclick="Game4_Japan.selectImage('${item.id}')"
+                                             class="btn-kid bg-red-50 border-4 border-red-200 rounded-2xl p-3 cursor-pointer flex items-center gap-3">
+                                            ${item.svg}
+                                            <span class="font-black text-sm text-gray-800">${item.name[CoreApp.currentLang] || item.name.pt}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+
+                            <!-- Coluna Sombras -->
+                            <div class="bg-white p-4 rounded-3xl border-4 border-gray-300 shadow-md">
+                                <h3 class="text-center font-black text-gray-700 mb-3 text-sm">Sombras</h3>
+                                <div class="grid grid-cols-1 gap-3">
+                                    ${shadowItems.map(item => `
+                                        <div id="jp-shd-${item.id}" onclick="Game4_Japan.selectShadow('${item.id}')"
+                                             class="btn-kid bg-gray-100 border-4 border-gray-300 rounded-2xl p-3 cursor-pointer flex items-center gap-3">
+                                            <div class="brightness-0 opacity-80">${item.svg}</div>
+                                            <span class="font-bold text-sm text-gray-400">Sombra</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                AccessibilityModule.speak(`${t.game4_title}. ${t.game4_inst}`);
+            },
+
+            selectImage(id) {
+                if (this.matchedPairs.includes(id)) return;
+                this.selectedImage = id;
+                document.querySelectorAll('[id^="jp-img-"]').forEach(el => el.classList.remove('ring-4', 'ring-brand-yellow'));
+                const el = document.getElementById(`jp-img-${id}`);
+                if (el) el.classList.add('ring-4', 'ring-brand-yellow');
+                AccessibilityModule.vibrate([20]);
+                this.checkMatch();
+            },
+
+            selectShadow(id) {
+                if (this.matchedPairs.includes(id)) return;
+                this.selectedShadow = id;
+                document.querySelectorAll('[id^="jp-shd-"]').forEach(el => el.classList.remove('ring-4', 'ring-brand-yellow'));
+                const el = document.getElementById(`jp-shd-${id}`);
+                if (el) el.classList.add('ring-4', 'ring-brand-yellow');
+                AccessibilityModule.vibrate([20]);
+                this.checkMatch();
+            },
+
+            checkMatch() {
+                if (!this.selectedImage || !this.selectedShadow) return;
+
+                if (this.selectedImage === this.selectedShadow) {
+                    const id = this.selectedImage;
+                    this.matchedPairs.push(id);
+                    document.getElementById(`jp-img-${id}`).classList.add('bg-emerald-100', 'border-emerald-500');
+                    document.getElementById(`jp-shd-${id}`).classList.add('bg-emerald-100', 'border-emerald-500');
+                    AccessibilityModule.playChime('success');
+                    AccessibilityModule.showToast("Par de sombras correto!");
+                    this.selectedImage = null;
+                    this.selectedShadow = null;
+
+                    if (this.matchedPairs.length === this.items.length) {
+                        setTimeout(() => {
+                            try { confetti({ particleCount: 70, spread: 60 }); } catch(e){}
+                            AccessibilityModule.playChime('fanfare');
+                            AccessibilityModule.showToast("Completaste as sombras do Japão!");
+                        }, 500);
+                    }
+                } else {
+                    AccessibilityModule.playChime('error');
+                    AccessibilityModule.vibrate([100]);
+                    setTimeout(() => {
+                        this.selectedShadow = null;
+                        document.querySelectorAll('[id^="jp-shd-"]').forEach(el => el.classList.remove('ring-4', 'ring-brand-yellow'));
+                    }, 500);
+                }
+            },
+
+            openFicha() {
+                FichaObraModule.open({
+                    who: "Mestres de Origami e artesãos de Kyoto no Japão.",
+                    why: "Para treinar a observação das formas e cultivar a paciência e a harmonia.",
+                    materials: "Papel de seda (Washi), madeira de bambu e cerâmica natural.",
+                    meaning: "Delicadeza, respeito pela natureza e celebração da paz."
+                }, CoreApp.t('game4_title'), "");
+            }
+        };
+
+        // ==========================================
+        // JOGO 5: CASAS DE SANTANA (SEQUÊNCIA)
+        // ==========================================
+        const Game5_Madeira = {
+            currentLevel: 1,
+            userSequence: [],
+            steps: [
+                {
+                    id: 'step1',
+                    title: '1. Estrutura Triangular',
+                    desc: 'Erguer as vigas fortes de madeira em forma de triângulo.',
+                    svg: `<svg viewBox="0 0 100 100" class="w-14 h-14"><path d="M50 15 L15 85 L85 85 Z" fill="none" stroke="#2B2D42" stroke-width="4"/></svg>`
+                },
+                {
+                    id: 'step2',
+                    title: '2. Cobertura de Colmo',
+                    desc: 'Colocar a palha de colmo trançada no telhado.',
+                    svg: `<svg viewBox="0 0 100 100" class="w-14 h-14"><path d="M50 15 L15 85 L85 85 Z" fill="#FFD166" stroke="#2B2D42" stroke-width="3"/></svg>`
+                },
+                {
+                    id: 'step3',
+                    title: '3. Pintura Viva',
+                    desc: 'Pintar paredes brancas, contorno vermelho e porta azul.',
+                    svg: `<svg viewBox="0 0 100 100" class="w-14 h-14"><path d="M50 15 L15 85 L85 85 Z" fill="#FFD166" stroke="#2B2D42" stroke-width="2"/><polygon points="25,85 50,40 75,85" fill="#FFF" stroke="#EF476F" stroke-width="3"/><rect x="42" y="60" width="16" height="25" fill="#118AB2"/></svg>`
+                }
+            ],
+
+            start() {
+                this.userSequence = [];
+                const content = document.getElementById('app-content');
+                const t = CoreApp.translations[CoreApp.currentLang];
+                const pool = [...this.steps].sort(() => Math.random() - 0.5);
+
+                content.innerHTML = `
+                    <div class="w-full max-w-3xl mx-auto my-2 animate-fade-in">
+                        <div class="flex flex-wrap justify-between items-center bg-sky-50 p-4 rounded-3xl border-4 border-sky-400 mb-4 gap-3 hc-element">
+                            <div class="flex items-center gap-3">
+                                <button onclick="CoreApp.goHome()" class="btn-kid bg-gray-200 text-gray-800 px-3 py-2 rounded-xl text-sm font-black">
+                                    <i class="fa-solid fa-arrow-left"></i> ${t.exit_btn}
+                                </button>
+                                <div>
+                                    <h2 class="text-xl sm:text-2xl font-black text-sky-600 flex items-center gap-2">
+                                        <i class="fa-solid fa-house-chimney"></i> ${t.game5_title}
+                                    </h2>
+                                    <p class="text-xs text-gray-700 font-bold">${t.game5_sub}</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <button onclick="Game5_Madeira.openFicha()" class="btn-kid bg-brand-purple text-white px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1">
+                                    <i class="fa-solid fa-book-open"></i> ${t.ficha_btn}
+                                </button>
+                                <button onclick="AccessibilityModule.speak('${t.game5_inst}')" class="btn-kid bg-amber-500 text-white px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1">
+                                    <i class="fa-solid fa-volume-high"></i> ${t.listen_btn}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Slots para a ordem -->
+                        <div class="bg-sky-50 p-4 rounded-3xl border-4 border-dashed border-sky-300 mb-4">
+                            <h3 class="text-center font-black text-sky-900 mb-2 text-sm">Passos Escolhidos:</h3>
+                            <div class="grid grid-cols-3 gap-3" id="santana-slots">
+                                ${[1, 2, 3].map(n => `
+                                    <div class="bg-white border-2 border-dashed border-gray-300 rounded-2xl p-3 flex flex-col items-center justify-center min-h-[110px] text-center">
+                                        <span class="w-8 h-8 rounded-full bg-sky-100 text-sky-700 font-black flex items-center justify-center text-sm mb-1">${n}</span>
+                                        <span class="text-[10px] text-gray-400 font-bold">Vazio</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Cartões para escolher -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="santana-pool">
+                            ${pool.map(step => `
+                                <div onclick="Game5_Madeira.chooseStep('${step.id}')"
+                                     class="btn-kid bg-white border-4 border-sky-200 rounded-2xl p-3 cursor-pointer flex flex-col items-center text-center">
+                                    ${step.svg}
+                                    <h4 class="font-black text-xs mt-1 text-gray-800">${step.title}</h4>
+                                    <p class="text-[10px] text-gray-600 mt-1 font-bold">${step.desc}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+
+                AccessibilityModule.speak(`${t.game5_title}. ${t.game5_inst}`);
+            },
+
+            chooseStep(stepId) {
+                if (this.userSequence.length >= 3) return;
+                this.userSequence.push(stepId);
+                AccessibilityModule.vibrate([20]);
+
+                if (this.userSequence.length === 3) {
+                    if (this.userSequence[0] === 'step1' && this.userSequence[1] === 'step2' && this.userSequence[2] === 'step3') {
+                        try { confetti({ particleCount: 70, spread: 60 }); } catch(e){}
+                        AccessibilityModule.playChime('fanfare');
+                        AccessibilityModule.showToast("Parabéns! Ordenaste a construção perfeitamente!");
+                        AccessibilityModule.speak("Excelente! Construíste a Casa de Santana!");
+                    } else {
+                        AccessibilityModule.playChime('error');
+                        AccessibilityModule.showToast("A ordem não está certa. A recomeçar...");
+                        setTimeout(() => this.start(), 1200);
+                    }
+                }
+            },
+
+            openFicha() {
+                FichaObraModule.open({
+                    who: "Carpinteiros e mestres de colmo da Ilha da Madeira.",
+                    why: "Para criar casas acolhedoras e inclinadas que deixam a chuva deslizar rapidamente.",
+                    materials: "Madeira das serras, colmo (palha de trigo) e tintas coloridas vivas.",
+                    meaning: "Símbolo vivo de acolhimento e harmonia com a natureza na Madeira."
+                }, CoreApp.t('game5_title'), "");
+            }
+        };
+
+        // ==========================================
+        // MODO "A MINHA CULTURA CONTA" (FOTOS E VOZ)
+        // ==========================================
+        const CultureModeModule = {
+            capturedImage: null,
+            recordedAudioBlob: null,
+            recordedAudioUrl: null,
+            mediaRecorder: null,
+            audioChunks: [],
+            isRecording: false,
+
+            render() {
+                const content = document.getElementById('app-content');
+                const t = CoreApp.translations[CoreApp.currentLang];
+
+                content.innerHTML = `
+                    <div class="bg-white border-8 border-brand-green rounded-3xl p-5 sm:p-6 max-w-2xl w-full text-center shadow-2xl hc-element animate-fade-in my-3">
+                        <div class="w-16 h-16 bg-brand-green text-white rounded-full flex items-center justify-center text-3xl mx-auto mb-2 shadow-lg">
+                            <i class="fa-solid fa-heart"></i>
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-black text-brand-purple">${t.culture_title}</h2>
+                        <p class="text-xs sm:text-sm text-gray-700 font-bold mt-1 max-w-md mx-auto">${t.culture_sub}</p>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-5 text-left">
+                            <!-- Foto da Criança / Família -->
+                            <div class="bg-emerald-50 p-4 rounded-2xl border-2 border-emerald-300 flex flex-col justify-between">
+                                <div>
+                                    <h4 class="font-black text-emerald-800 text-sm flex items-center gap-2">
+                                        <i class="fa-solid fa-camera"></i> 1. Foto ou Desenho
+                                    </h4>
+                                    <p class="text-xs text-gray-600 font-bold mt-1">Tira uma foto a um objeto ou desenho da tua família:</p>
+                                </div>
+                                <div class="mt-3">
+                                    <input type="file" accept="image/*" id="culture-file-input" class="hidden" onchange="CultureModeModule.handleFile(event)">
+                                    <button onclick="document.getElementById('culture-file-input').click()" class="btn-kid w-full bg-emerald-600 text-white py-2 rounded-xl text-xs font-black flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-upload"></i> Escolher / Tirar Foto
+                                    </button>
+                                    <div id="culture-photo-preview" class="mt-2 hidden text-center">
+                                        <img id="culture-preview-img" class="w-24 h-24 object-contain mx-auto rounded-xl border-2 border-emerald-400 bg-white">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Gravação de Voz dos Pais e Crianças -->
+                            <div class="bg-purple-50 p-4 rounded-2xl border-2 border-purple-300 flex flex-col justify-between">
+                                <div>
+                                    <h4 class="font-black text-purple-800 text-sm flex items-center gap-2">
+                                        <i class="fa-solid fa-microphone"></i> 2. Gravar História ou Canção
+                                    </h4>
+                                    <p class="text-xs text-gray-600 font-bold mt-1">Grava uma palavra, canção ou recado na vossa língua materna:</p>
+                                </div>
+                                <div class="mt-3">
+                                    <button id="btn-record-voice" onclick="CultureModeModule.toggleRecord()" class="btn-kid w-full bg-purple-600 text-white py-2 rounded-xl text-xs font-black flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-microphone"></i> Começar a Gravar Voz
+                                    </button>
+                                    <div id="culture-audio-preview" class="mt-2 hidden">
+                                        <audio id="culture-audio-player" controls class="w-full h-8"></audio>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Identificação da Criança -->
+                        <div class="my-3">
+                            <input type="text" id="culture-author-input" placeholder="Nome da criança ou da família" class="w-full max-w-md px-4 py-2 rounded-xl border-2 border-gray-300 font-bold text-sm text-center">
+                        </div>
+
+                        <div class="flex flex-wrap gap-3 justify-center">
+                            <button onclick="CultureModeModule.saveToMural()" class="btn-kid bg-brand-green text-white px-6 py-2.5 rounded-2xl font-black text-sm flex items-center gap-2 shadow">
+                                <i class="fa-solid fa-floppy-disk"></i> Guardar no Mural da Sala
+                            </button>
+                            <button onclick="CoreApp.goHome()" class="btn-kid bg-gray-200 text-gray-800 px-5 py-2.5 rounded-2xl font-black text-sm">
+                                ${t.exit_btn}
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                AccessibilityModule.speak(`${t.culture_title}. ${t.culture_sub}`);
+            },
+
+            handleFile(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.capturedImage = e.target.result;
+                    const preview = document.getElementById('culture-photo-preview');
+                    const img = document.getElementById('culture-preview-img');
+                    if (preview && img) {
+                        img.src = this.capturedImage;
+                        preview.classList.remove('hidden');
+                    }
+                    AccessibilityModule.showToast("Foto carregada com sucesso!");
+                };
+                reader.readAsDataURL(file);
+            },
+
+            async toggleRecord() {
+                const btn = document.getElementById('btn-record-voice');
+                if (!this.isRecording) {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        this.mediaRecorder = new MediaRecorder(stream);
+                        this.audioChunks = [];
+
+                        this.mediaRecorder.ondataavailable = (e) => {
+                            if (e.data.size > 0) this.audioChunks.push(e.data);
+                        };
+
+                        this.mediaRecorder.onstop = () => {
+                            this.recordedAudioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+                            this.recordedAudioUrl = URL.createObjectURL(this.recordedAudioBlob);
+                            const player = document.getElementById('culture-audio-player');
+                            const preview = document.getElementById('culture-audio-preview');
+                            if (player && preview) {
+                                player.src = this.recordedAudioUrl;
+                                preview.classList.remove('hidden');
+                            }
+                            AccessibilityModule.showToast("Gravação de voz concluída!");
+                        };
+
+                        this.mediaRecorder.start();
+                        this.isRecording = true;
+                        btn.className = "btn-kid w-full bg-red-600 text-white py-2 rounded-xl text-xs font-black flex items-center justify-center gap-2 animate-pulse";
+                        btn.innerHTML = `<i class="fa-solid fa-stop"></i> A Gravar... Clica para Parar`;
+                    } catch(err) {
+                        AccessibilityModule.showToast("Microfone não disponível ou bloqueado.");
+                    }
+                } else {
+                    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+                        this.mediaRecorder.stop();
+                    }
+                    this.isRecording = false;
+                    btn.className = "btn-kid w-full bg-purple-600 text-white py-2 rounded-xl text-xs font-black flex items-center justify-center gap-2";
+                    btn.innerHTML = `<i class="fa-solid fa-check"></i> Gravação Pronta!`;
+                }
+            },
+
+            saveToMural() {
+                const authorInput = document.getElementById('culture-author-input');
+                const author = (authorInput && authorInput.value.trim()) || "Criança & Família";
+
+                const imageToSave = this.capturedImage || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23d1fae5"/><circle cx="50" cy="50" r="30" fill="%2306D6A0"/><path d="M40 50 L47 57 L62 42" stroke="%23fff" stroke-width="5" fill="none"/></svg>';
+
+                MuralState.addWork({
+                    id: 'culture-work-' + Date.now(),
+                    title: 'Memória da Minha Cultura',
+                    author: author,
+                    region: 'Família Intercultural',
+                    date: new Date().toISOString().split('T')[0],
+                    image: imageToSave,
+                    audio: this.recordedAudioUrl,
+                    fiche: {
+                        who: `${author} e a sua família.`,
+                        why: "Para partilhar com os amigos da sala as tradições e memórias de casa.",
+                        materials: "Voz, memórias e fotografias queridas.",
+                        meaning: "Todas as culturas têm valor e tornam a sala mais rica e amiga!"
+                    }
+                });
+
+                AccessibilityModule.showToast(CoreApp.t('saved_msg'));
+                AccessibilityModule.speak(CoreApp.t('saved_msg'));
+                CoreApp.openMural();
+            }
+        };
+
+        // ==========================================
+        // MURAL VIRTUAL DA SALA (COM BOTÃO REMOVER)
+        // ==========================================
+        const MuralModule = {
+            viewMode: 'grid',
+
+            render() {
+                const content = document.getElementById('app-content');
+                const t = CoreApp.translations[CoreApp.currentLang];
+
+                content.innerHTML = `
+                    <div class="w-full max-w-6xl mx-auto my-2 animate-fade-in">
+                        <div class="flex flex-wrap justify-between items-center gap-3 mb-6 bg-white p-4 rounded-3xl border-4 border-brand-blue shadow-sm">
+                            <div>
+                                <h2 class="text-2xl sm:text-3xl font-black text-brand-blue flex items-center gap-2">
+                                    <i class="fa-solid fa-images"></i> ${t.mural_btn}
+                                </h2>
+                                <p class="text-xs sm:text-sm text-gray-600 font-bold">Todas as obras e criações guardadas pelas crianças e famílias!</p>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <button onclick="MuralModule.setView('grid')" class="px-3 py-1.5 rounded-xl font-bold text-xs ${this.viewMode === 'grid' ? 'bg-brand-blue text-white shadow' : 'bg-gray-100 text-gray-700'}">
+                                    <i class="fa-solid fa-table-cells-large"></i> Grelha
+                                </button>
+                                <button onclick="MuralModule.setView('timeline')" class="px-3 py-1.5 rounded-xl font-bold text-xs ${this.viewMode === 'timeline' ? 'bg-brand-blue text-white shadow' : 'bg-gray-100 text-gray-700'}">
+                                    <i class="fa-solid fa-timeline"></i> Linha do Tempo
+                                </button>
+                                <button onclick="CoreApp.goHome()" class="btn-kid bg-gray-200 text-gray-800 px-3 py-1.5 rounded-xl font-black text-xs">
+                                    ${t.exit_btn}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="mural-body">
+                            ${this.renderWorks()}
+                        </div>
+                    </div>
+                `;
+
+                AccessibilityModule.speak(`${t.mural_btn}.`);
+            },
+
+            setView(mode) {
+                this.viewMode = mode;
+                this.render();
+            },
+
+            removeWork(id) {
+                MuralState.removeWork(id);
+                AccessibilityModule.vibrate([40]);
+                AccessibilityModule.showToast(CoreApp.t('removed_msg'));
+                AccessibilityModule.speak(CoreApp.t('removed_msg'));
+                this.render();
+            },
+
+            renderWorks() {
+                const works = MuralState.works;
+                const t = CoreApp.translations[CoreApp.currentLang];
+
+                if (works.length === 0) {
+                    return `
+                        <div class="bg-white rounded-3xl p-8 text-center border-4 border-dashed border-gray-300">
+                            <i class="fa-solid fa-image text-5xl text-gray-300 mb-3"></i>
+                            <h3 class="text-lg font-bold text-gray-600">O Mural está pronto para receber as vossas obras!</h3>
+                            <p class="text-xs text-gray-400 mt-1">Joga qualquer uma das atividades e clica em "Guardar no Mural".</p>
+                        </div>
+                    `;
+                }
+
+                if (this.viewMode === 'timeline') {
+                    return `
+                        <div class="space-y-4">
+                            ${works.map(w => `
+                                <div class="bg-white rounded-3xl p-4 border-4 ${w.isChildWork ? 'border-brand-green' : 'border-gray-200'} shadow-md flex flex-col sm:flex-row items-center gap-4">
+                                    <img src="${w.image}" class="w-28 h-28 object-contain bg-gray-50 rounded-2xl border p-1 shrink-0">
+                                    <div class="flex-1 text-left w-full">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <span class="${w.isChildWork ? 'bg-brand-green text-white' : 'bg-gray-200 text-gray-700'} text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">
+                                                ${w.isChildWork ? '⭐ ' + t.child_work_badge : t.example_badge}
+                                            </span>
+                                            <span class="text-xs text-gray-400 font-bold">${w.date}</span>
+                                        </div>
+                                        <h3 class="text-lg font-black text-gray-800 mt-1">${w.title}</h3>
+                                        <p class="text-xs text-gray-500 font-bold"><i class="fa-solid fa-user"></i> ${w.author} • ${w.region}</p>
+                                        ${w.audio ? `<audio controls src="${w.audio}" class="w-full mt-2 h-7"></audio>` : ''}
+                                    </div>
+                                    <div class="flex sm:flex-col gap-2 shrink-0">
+                                        <button onclick='FichaObraModule.open(${JSON.stringify(w.fiche)}, "${w.title}", "${w.image}")' class="btn-kid bg-brand-yellow text-gray-900 px-3 py-1.5 rounded-xl font-black text-xs flex items-center gap-1">
+                                            <i class="fa-solid fa-book-open"></i> Ficha
+                                        </button>
+                                        <button onclick="MuralModule.removeWork('${w.id}')" class="btn-kid bg-red-100 hover:bg-red-500 hover:text-white text-red-600 px-3 py-1.5 rounded-xl font-black text-xs flex items-center gap-1 transition">
+                                            <i class="fa-solid fa-trash-can"></i> ${t.remove_btn}
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                        ${works.map(w => `
+                            <div class="bg-white rounded-3xl p-4 border-4 ${w.isChildWork ? 'border-brand-green' : 'border-gray-200'} shadow-lg flex flex-col justify-between relative hc-element">
+                                <div>
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="${w.isChildWork ? 'bg-brand-green text-white' : 'bg-gray-100 text-gray-600'} text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">
+                                            ${w.isChildWork ? '⭐ ' + t.child_work_badge : t.example_badge}
+                                        </span>
+                                        <button onclick="MuralModule.removeWork('${w.id}')" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-full text-xs font-black flex items-center gap-1 transition shadow-sm" title="${t.remove_btn}">
+                                            <i class="fa-solid fa-trash-can"></i> ${t.remove_btn}
+                                        </button>
+                                    </div>
+
+                                    <img src="${w.image}" class="w-full h-44 object-contain bg-gray-50 rounded-2xl border p-2 mb-2">
+                                    <span class="text-[10px] font-black uppercase text-brand-pink">${w.region}</span>
+                                    <h3 class="text-base font-black text-gray-800 leading-tight mt-0.5">${w.title}</h3>
+                                    <p class="text-xs text-gray-500 font-bold mt-1"><i class="fa-solid fa-user"></i> ${w.author}</p>
+                                    ${w.audio ? `<audio controls src="${w.audio}" class="w-full mt-2 h-7"></audio>` : ''}
+                                </div>
+
+                                <div class="mt-3 flex gap-2">
+                                    <button onclick='FichaObraModule.open(${JSON.stringify(w.fiche)}, "${w.title}", "${w.image}")' class="flex-1 btn-kid bg-brand-yellow text-gray-900 py-2 rounded-xl font-black text-xs flex items-center justify-center gap-1.5">
+                                        <i class="fa-solid fa-book-open"></i> ${t.ficha_btn}
+                                    </button>
+                                    <button onclick="AccessibilityModule.speak('${w.title}. Autor: ${w.author}. ${w.region}')" class="btn-kid bg-pink-100 text-brand-pink px-3 py-2 rounded-xl font-bold text-xs" title="${t.listen_btn}">
+                                        <i class="fa-solid fa-volume-high"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+        };
+
+        window.onload = function() {
+            CoreApp.init();
+        };
+    </script>
+</body>
+</html>
